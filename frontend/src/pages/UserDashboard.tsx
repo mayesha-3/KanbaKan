@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { Plus, MessageSquare, Trash2, Edit, Send, Link2 } from 'lucide-react'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const fetchPersonalTasks = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/personal`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/personal`, {
     headers: { 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}` 
@@ -20,7 +21,7 @@ const fetchPersonalTasks = async () => {
 
 const fetchUsers = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -33,7 +34,7 @@ const fetchUsers = async () => {
 
 const fetchComments = async (taskId: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -43,7 +44,7 @@ const fetchComments = async (taskId: string) => {
 
 const postComment = async ({ taskId, content }: { taskId: string, content: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     method: 'POST',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -58,7 +59,7 @@ const postComment = async ({ taskId, content }: { taskId: string, content: strin
 
 const updateTaskStatus = async ({ id, status, updatedAt }: { id: string, status: string, updatedAt: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}/status`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}/status`, {
     method: 'PATCH',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -76,7 +77,7 @@ const updateTaskStatus = async ({ id, status, updatedAt }: { id: string, status:
 
 const createTask = async (taskData: any) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks`, {
     method: 'POST',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -94,7 +95,7 @@ const createTask = async (taskData: any) => {
 
 const updateTask = async ({ id, taskData }: { id: string, taskData: any }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}`, {
     method: 'PATCH',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -112,7 +113,7 @@ const updateTask = async ({ id, taskData }: { id: string, taskData: any }) => {
 
 const deleteTask = async (id: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'

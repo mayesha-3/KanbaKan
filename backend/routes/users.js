@@ -25,22 +25,29 @@ router.get('/', requireEmployee, async (req, res) => {
       .populate('superior', 'name email username')
       .lean()
 
-    // Auto-heal any placeholder emails (@kanbankc.internal) using Firebase Admin Auth
+    // Keep the admin list in sync with the email stored in Firebase Auth.
     const healingPromises = users.map(async (u) => {
-      if (u.email && u.email.endsWith('@kanbankc.internal') && u.uid) {
+      if (u.uid) {
         try {
           const fbUser = await getAuth().getUser(u.uid)
-          if (fbUser && fbUser.email && fbUser.email !== u.email) {
-            const cleanEmail = fbUser.email.trim().toLowerCase()
-            const existingWithEmail = await User.findOne({ email: cleanEmail, _id: { $ne: u._id } })
-            if (!existingWithEmail) {
+          const cleanEmail = fbUser.email?.trim().toLowerCase()
+          if (cleanEmail && cleanEmail !== u.email) {
+            const existingWithEmail = await User.findOne({
+              email: cleanEmail,
+              _id: { $ne: u._id },
+            })
+            if (existingWithEmail) {
+              console.error(
+                `Firebase email sync conflict for user ${u.uid}: the email is already assigned to another user`,
+              )
+            } else {
               await User.updateOne({ _id: u._id }, { email: cleanEmail })
-              u.email = cleanEmail
               clearUserCache(u.uid)
             }
+            u.email = cleanEmail
           }
         } catch (fbErr) {
-          // ignore lookup errors
+          console.warn(`Could not sync Firebase email for user ${u.uid}:`, fbErr.message)
         }
       }
       return u

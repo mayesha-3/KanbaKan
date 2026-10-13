@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { auth } from '../firebase'
 import { MessageSquare, Trash2, Edit, Send, Plus, Link2, LayoutDashboard } from 'lucide-react'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const fetchOrgTasks = async (filters: Record<string, any>) => {
@@ -15,7 +16,7 @@ const fetchOrgTasks = async (filters: Record<string, any>) => {
   if (filters.supervisedOnly) cleanFilters.supervisedOnly = 'true'
 
   const params = new URLSearchParams(cleanFilters)
-  const res = await fetch(`${BACKEND_URL}/api/tasks/org?${params.toString()}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/org?${params.toString()}`, {
     headers: { 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}` 
@@ -28,7 +29,7 @@ const fetchOrgTasks = async (filters: Record<string, any>) => {
 
 const fetchUsers = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users`, {
     headers: { 
       Authorization: `Bearer ${token}` 
     },
@@ -43,7 +44,7 @@ const fetchUsers = async () => {
 
 const fetchComments = async (taskId: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -53,7 +54,7 @@ const fetchComments = async (taskId: string) => {
 
 const postComment = async ({ taskId, content }: { taskId: string, content: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     method: 'POST',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -68,7 +69,7 @@ const postComment = async ({ taskId, content }: { taskId: string, content: strin
 
 const updateTaskStatus = async ({ id, status, updatedAt }: { id: string, status: string, updatedAt: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}/status`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}/status`, {
     method: 'PATCH',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -83,7 +84,7 @@ const updateTaskStatus = async ({ id, status, updatedAt }: { id: string, status:
 
 const updateTask = async ({ id, taskData }: { id: string, taskData: any }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}`, {
     method: 'PATCH',
     headers: { 
       Authorization: `Bearer ${token}`,
@@ -101,7 +102,7 @@ const updateTask = async ({ id, taskData }: { id: string, taskData: any }) => {
 
 const deleteTask = async (id: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${id}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${id}`, {
     method: 'DELETE',
     headers: { 
       'Content-Type': 'application/json',
@@ -257,14 +258,16 @@ export default function OrgDashboard() {
             <LayoutDashboard size={16} /> My Board
           </Link>
 
-          <select
-            value={filters.supervisedOnly ? 'supervised' : 'all'}
-            onChange={e => setFilters({...filters, supervisedOnly: e.target.value === 'supervised'})}
-            className="border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] font-semibold cursor-pointer"
-          >
-            <option value="all">Whole Organization</option>
-            <option value="supervised">Under My Supervision Only</option>
-          </select>
+          {currentUserRole !== 'employee' && (
+            <select
+              value={filters.supervisedOnly ? 'supervised' : 'all'}
+              onChange={e => setFilters({...filters, supervisedOnly: e.target.value === 'supervised'})}
+              className="border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] font-semibold cursor-pointer"
+            >
+              <option value="all">Whole Organization</option>
+              <option value="supervised">Under My Supervision Only</option>
+            </select>
+          )}
 
           <select 
             value={filters.status} 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 import { Network, ChevronDown, ChevronRight, User as UserIcon, Briefcase } from 'lucide-react'
 
 type UserNode = {
@@ -18,7 +19,7 @@ type UserNode = {
 
 const fetchUsers = async (): Promise<UserNode[]> => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include',
   })

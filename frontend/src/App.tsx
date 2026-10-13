@@ -25,6 +25,7 @@ import AdminSecurity from './pages/AdminSecurity'
 import InstallPWA from './components/InstallPWA'
 import SecurityGate from './components/SecurityGate'
 import { BACKEND_URL } from './config'
+import { apiFetch, SECURITY_GATE_EXPIRED_EVENT } from './api'
 
 function BoardsHub() {
   const navigate = useNavigate()
@@ -93,17 +94,25 @@ function App() {
     setProfile((currentProfile) => currentProfile ? { ...currentProfile, isWarned: true } : currentProfile)
   })
 
+  useEffect(() => {
+    const handleGateExpired = () => {
+      setSecurityGatePassed(false)
+      setProfile(null)
+      setUser(null)
+      void signOut(auth)
+    }
+
+    window.addEventListener(SECURITY_GATE_EXPIRED_EVENT, handleGateExpired)
+    return () => window.removeEventListener(SECURITY_GATE_EXPIRED_EVENT, handleGateExpired)
+  }, [])
+
   const fetchSession = async (token: string) => {
-    const gateToken = sessionStorage.getItem('gateToken') || ''
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     }
-    if (gateToken) {
-      headers['x-gate-token'] = gateToken
-    }
 
-    const response = await fetch(`${BACKEND_URL}/api/auth/session`, {
+    const response = await apiFetch(`${BACKEND_URL}/api/auth/session`, {
       method: 'POST',
       headers,
       credentials: 'include',

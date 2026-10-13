@@ -70,7 +70,7 @@ router.get('/org', requireEmployee, async (req, res) => {
     if (req.query.assignee) filter.assignees = req.query.assignee
     if (req.query.sprintId) filter.sprintId = req.query.sprintId
 
-    if (req.query.supervisedOnly === 'true') {
+    if (user.role === 'employee' || req.query.supervisedOnly === 'true') {
       const visibleIds = await getVisibleUserIdsForEmployee(user._id)
       if (filter.assignees) {
         const singleAssignee = filter.assignees.toString()

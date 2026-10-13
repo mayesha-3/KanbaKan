@@ -11,6 +11,7 @@ import sprintsRouter from "./routes/sprints.js";
 import reportsRouter from "./routes/reports.js";
 import securityGateRouter from "./routes/securityGate.js";
 import { verifyFirebaseToken } from "./middleware/auth.js";
+import { verifyGateTokenHeader } from "./middleware/gateAuth.js";
 
 const app = express();
 
@@ -127,6 +128,17 @@ const limiter = rateLimit({
   },
 });
 app.use(limiter);
+
+// Keep the challenge endpoints public; require a passed gate for application APIs.
+app.use("/api", (req, res, next) => {
+  if (
+    req.path === "/security-gate/question" ||
+    req.path === "/security-gate/verify"
+  ) {
+    return next();
+  }
+  return verifyGateTokenHeader(req, res, next);
+});
 
 const reportLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

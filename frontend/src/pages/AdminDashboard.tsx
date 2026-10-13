@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 import { AlertTriangle, Trash2, Shield, UserCheck, Search, CheckCircle, ShieldAlert, Edit3, Mail } from 'lucide-react'
 
 type UserItem = {
@@ -24,7 +25,7 @@ type UserItem = {
 
 const fetchUsers = async (): Promise<UserItem[]> => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include',
   })
@@ -34,7 +35,7 @@ const fetchUsers = async (): Promise<UserItem[]> => {
 
 const warnUser = async ({ id, isWarned }: { id: string; isWarned: boolean }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users/${id}/warn`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}/warn`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ const warnUser = async ({ id, isWarned }: { id: string; isWarned: boolean }) => 
 
 const updateSuperior = async ({ id, superiorId }: { id: string; superiorId: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users/${id}/superior`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}/superior`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ const updateSuperior = async ({ id, superiorId }: { id: string; superiorId: stri
 
 const updateRole = async ({ id, role }: { id: string; role: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users/${id}/role`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}/role`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ const updateRole = async ({ id, role }: { id: string; role: string }) => {
 
 const updateEmail = async ({ id, email }: { id: string; email: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users/${id}/email`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}/email`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ const updateEmail = async ({ id, email }: { id: string; email: string }) => {
 
 const deleteUser = async (id: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include',

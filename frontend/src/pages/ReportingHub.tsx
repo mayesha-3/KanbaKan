@@ -4,6 +4,7 @@ import { FileText } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 
 export default function ReportingHub() {
   const [scope, setScope] = useState<'self' | 'org'>('self')
@@ -18,7 +19,7 @@ export default function ReportingHub() {
       try {
         const token = await auth.currentUser?.getIdToken()
         if (!token) return
-        const res = await fetch(`${BACKEND_URL}/api/users`, {
+        const res = await apiFetch(`${BACKEND_URL}/api/users`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.ok) {
@@ -41,7 +42,7 @@ export default function ReportingHub() {
       if (scope === 'org' && usernameFilter.trim()) {
         url += `&username=${encodeURIComponent(usernameFilter.trim())}`
       }
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: { 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 

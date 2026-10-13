@@ -3,6 +3,7 @@ import { getToken, onMessage } from 'firebase/messaging';
 import { messaging } from '../firebase';
 import { getAuth } from 'firebase/auth';
 import { BACKEND_URL } from '../config';
+import { apiFetch } from '../api';
 
 const VAPID_KEY = 'BAU9GDVtt33a3ktDiyHza3PZuBagmGDOFHKw-FHvvjCtEFj9_Ilzv3PsKFkC-oCt_UUXz6lIpyjRZlA6UNaFqpE';
 
@@ -37,7 +38,7 @@ export const useFCM = (onWarning?: () => void) => {
             const auth = getAuth();
             const idToken = await auth.currentUser?.getIdToken();
             if (idToken) {
-              await fetch(`${BACKEND_URL}/api/profile/device-token`, {
+              await apiFetch(`${BACKEND_URL}/api/profile/device-token`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

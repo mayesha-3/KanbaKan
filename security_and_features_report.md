@@ -20,10 +20,11 @@ flowchart TD
     Proxy --> HealthCheck{Is /health or /?}
     HealthCheck -- Yes --> HealthRes[200 OK Uptime Response]
     HealthCheck -- No --> RateLimiter[Express Rate Limiter: 100 req / 15 min]
-    RateLimiter --> SecurityGate{Security Gate /api/security-gate}
-    SecurityGate -- Honeypot / IP Ban Check --> Blocked[403 Forbidden / Banned]
-    SecurityGate -- Challenge Verify --> GateToken[HMAC Gate Token Issued]
-    RateLimiter --> AuthMiddleware[verifyFirebaseToken + Token Cache]
+    RateLimiter --> PublicGate{Public gate question / verify}
+    PublicGate -- Challenge Verify --> GateToken[HMAC Gate Token Issued]
+    RateLimiter --> GateCheck{Valid x-gate-token?}
+    GateCheck -- No --> Blocked[403 Forbidden]
+    GateCheck -- Yes --> AuthMiddleware[verifyFirebaseToken + Token Cache]
     AuthMiddleware --> RBACCheck[RBAC Middleware: Admin / C-Grade / Employee]
     RBACCheck --> BusinessLogic[Task / Event / Sprint API Logic]
 ```
@@ -55,6 +56,7 @@ flowchart TD
 ### B. Authentication & Token Security
 * **Firebase Admin Authentication**:
   * All protected `/api/*` endpoints require a valid `Authorization: Bearer <id_token>` header verified against Firebase Admin SDK.
+  * Application API routes additionally require a valid security-gate token. The public challenge question and verification routes are exempt.
 * **Server-Side User Caching**:
   * In-memory cache with 5-minute TTL (`USER_CACHE_TTL`) maps Firebase `uid` to MongoDB `_id` and `role`.
   * Reduces MongoDB database queries on every authenticated request while ensuring instant cache clearing on account deletion via `clearUserCache(uid)`.
@@ -94,12 +96,12 @@ sequenceDiagram
 
 1. **Honeypot Trap**:
    * Contains an invisible form field `company_website_url`. Spambots and automated scrapers that autofill this field are silently rejected immediately (`400 Invalid Submission`).
-2. **SHA-256 Hashed Answers**:
-   * Verification answers are normalized (lowercase, whitespace stripped) and hashed using SHA-256 (`hashAnswersList`). Plain-text answers are never hardcoded or exposed in DB payloads.
+2. **Salted PBKDF2 Answer Hashes**:
+   * Verification answers are normalized and stored as individual salted PBKDF2-SHA512 hashes (`hashAnswersList`). Legacy plaintext answer values are converted to hashes and removed from configuration storage; admin responses never return answers or hashes. Admins can replace answers, but cannot retrieve the existing values.
 3. **HMAC-Signed Gate Tokens (`x-gate-token`)**:
-   * Successful gate verification generates an HMAC-SHA256 signed token valid for 600 seconds (10 minutes). Protected endpoints verify this token via `verifyGateTokenHeader`.
+   * Successful gate verification generates an HMAC-SHA256 signed token valid for 600 seconds (10 minutes). Application API routes verify this token via `verifyGateTokenHeader`; public challenge endpoints are exempt. The frontend returns users to the challenge after the token expires.
 4. **Automated 5-Attempt Failure Threshold & Admin Report Queue**:
-   * If an IP fails verification 5 times within 15 minutes, the system logs a report containing IP address, timestamp, and user agent, and pauses further attempts from that IP pending admin review.
+   * If an IP fails verification 5 times within 15 minutes, the system logs a report containing IP address, timestamp, and user agent. Further incorrect answers are reported as pending review; the IP is blocked only after an admin bans it.
 5. **Admin Security Gate Panel & RED/GREEN Decision Workflow**:
    * Admins can inspect flagged intrusion reports in real time.
    * **RED Decision**: Bans the offending IP address permanently (`banList`).
@@ -124,7 +126,7 @@ sequenceDiagram
 | :--- | :--- |
 | **Kanban Task Board** | Dynamic column views (Todo, In Progress, Review, Completed), task priority tagging (Low, Medium, High, Urgent), link attachments, due date pickers, tags. |
 | **Personal Dashboard** | Customized task view showing tasks assigned directly to the logged-in user, filtered by status/priority. |
-| **Organization Dashboard** | Organization-wide board with hierarchy-aware supervised filtering (`supervisedOnly=true`) for managers. |
+| **Organization Dashboard** | Organization-wide board for Admin/C-Grade; employee results are always scoped to the employee and their reporting hierarchy by the backend. |
 | **Sprint Management & Planning Hub** | Create sprints, activate active sprint, close completed sprints, view sprint velocity, assign tasks to sprints. |
 | **Chain of Command (COC) Tree** | Interactive organizational chart visualizer showing direct and nested subordinate relationships. |
 | **Deadlines & Interactive Calendar** | Monthly/weekly calendar view of task due dates and scheduling events. |
@@ -169,12 +171,13 @@ graph TD
 | **View Supervised Tasks (`supervisedOnly=true`)** | `DENIED` | `ALLOWED` (Subordinates) | `ALLOWED` (All) | `ALLOWED` (All) |
 | **View Chain of Command (COC) Tree** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Create & Manage Events / Calendar** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
-| **Create, Activate, Close Sprints** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
+| **Create Sprints** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
+| **Update or Archive Sprints** | `DENIED` | `DENIED` | `DENIED` | `ALLOWED` |
 | **Generate & Export CSV/PDF Reports** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Update Own Profile (Name, Username, Superior)** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Register FCM Device Token** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Delete Own Account** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
-| **List All Registered Users** | `DENIED` | `DENIED` | `ALLOWED` | `ALLOWED` |
+| **List All Registered Users** | `DENIED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Change User Role (Promote/Demote)** | `DENIED` | `DENIED` | `DENIED` | `ALLOWED` |
 | **Issue Official Warning to User (`isWarned`)** | `DENIED` | `DENIED` | `DENIED` | `ALLOWED` |
 | **Assign/Update User Superior** | `DENIED` | `DENIED` | `DENIED` | `ALLOWED` |

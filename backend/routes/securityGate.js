@@ -33,12 +33,13 @@ const getRequestIp = (req) => {
 }
 
 const buildSecurityGateState = (value = {}) => {
-  const rawAnswersStr = value.rawAnswersStr || DEFAULT_ANSWERS_STR
-  const hashedAnswers = value.hashedAnswers || hashAnswersList(rawAnswersStr)
+  const hashedAnswers =
+    Array.isArray(value.hashedAnswers) && value.hashedAnswers.length > 0
+      ? value.hashedAnswers
+      : hashAnswersList(value.rawAnswersStr || DEFAULT_ANSWERS_STR)
 
   return {
     question: value.question || DEFAULT_QUESTION,
-    rawAnswersStr,
     hashedAnswers,
     banList: Array.isArray(value.banList) ? value.banList : [],
     reports: Array.isArray(value.reports) ? value.reports : [],
@@ -54,7 +55,6 @@ const getSecurityGateConfig = async () => {
       key: 'securityGate',
       value: {
         question: DEFAULT_QUESTION,
-        rawAnswersStr: DEFAULT_ANSWERS_STR,
         hashedAnswers: defaultHashedAnswers,
         banList: [],
         reports: [],
@@ -63,7 +63,11 @@ const getSecurityGateConfig = async () => {
     })
   }
 
-  return buildSecurityGateState(config.value)
+  const state = buildSecurityGateState(config.value)
+  if (Object.prototype.hasOwnProperty.call(config.value || {}, 'rawAnswersStr')) {
+    await persistSecurityGateState(state)
+  }
+  return state
 }
 
 const persistSecurityGateState = async (state) => {
@@ -186,7 +190,6 @@ router.get('/admin', verifyFirebaseToken, requireAdmin, async (req, res) => {
     const config = await getSecurityGateConfig()
     res.json({
       question: config.question,
-      rawAnswersStr: config.rawAnswersStr || DEFAULT_ANSWERS_STR,
       banList: config.banList || [],
       reports: [...(config.reports || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
     })
@@ -199,12 +202,20 @@ router.get('/admin', verifyFirebaseToken, requireAdmin, async (req, res) => {
 router.patch('/admin', verifyFirebaseToken, requireAdmin, async (req, res) => {
   try {
     const { question, answers } = req.body
-    if (!question || !answers) {
-      return res.status(400).json({ error: 'Question and acceptable answers are required' })
+    if (typeof question !== 'string' || !question.trim()) {
+      return res.status(400).json({ error: 'A question is required' })
+    }
+    if (answers !== undefined && typeof answers !== 'string') {
+      return res.status(400).json({ error: 'Acceptable answers must be text' })
     }
 
     const config = await getSecurityGateConfig()
-    const hashedAnswers = hashAnswersList(answers)
+    const hashedAnswers = answers?.trim()
+      ? hashAnswersList(answers)
+      : config.hashedAnswers
+    if (hashedAnswers.length === 0) {
+      return res.status(400).json({ error: 'At least one acceptable answer is required' })
+    }
 
     const updated = await SystemConfig.findOneAndUpdate(
       { key: 'securityGate' },
@@ -213,7 +224,6 @@ router.patch('/admin', verifyFirebaseToken, requireAdmin, async (req, res) => {
         value: {
           ...config,
           question: question.trim(),
-          rawAnswersStr: answers.trim(),
           hashedAnswers,
         },
       },
@@ -222,7 +232,6 @@ router.patch('/admin', verifyFirebaseToken, requireAdmin, async (req, res) => {
 
     res.json({
       question: updated.value.question,
-      rawAnswersStr: updated.value.rawAnswersStr,
       banList: updated.value.banList || [],
       reports: updated.value.reports || [],
     })

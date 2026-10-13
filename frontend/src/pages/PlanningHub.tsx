@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { auth } from '../firebase'
 import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, Trash2, CalendarDays } from 'lucide-react'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -16,7 +17,7 @@ const MAX_CHIPS = 3
 
 const fetchEvents = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/events`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/events`, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
@@ -29,7 +30,7 @@ const fetchEvents = async () => {
 
 const createEvent = async (data: { title: string; description: string; eventType: string; date: string; deadline?: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/events`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/events`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -277,7 +278,7 @@ export default function PlanningHub() {
           if (!deleteEvent) return
           try {
             const token = await auth.currentUser?.getIdToken()
-            const res = await fetch(`${BACKEND_URL}/api/events/${deleteEvent._id}`, {
+            const res = await apiFetch(`${BACKEND_URL}/api/events/${deleteEvent._id}`, {
               method: 'DELETE',
               headers: { Authorization: `Bearer ${token}` },
               credentials: 'include'

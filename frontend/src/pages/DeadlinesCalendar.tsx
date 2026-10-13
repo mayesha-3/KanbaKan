@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { Send, ChevronLeft, ChevronRight, CheckCircle2, Circle } from 'lucide-react'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTH_NAMES = [
@@ -14,7 +15,7 @@ const MAX_CHIPS_PER_DAY = 3
 
 const fetchOrgTasks = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/org`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/org`, {
     headers: { 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}` 
@@ -27,7 +28,7 @@ const fetchOrgTasks = async () => {
 
 const fetchComments = async (taskId: string) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -37,7 +38,7 @@ const fetchComments = async (taskId: string) => {
 
 const postComment = async ({ taskId, content }: { taskId: string, content: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/tasks/${taskId}/comments`, {
     method: 'POST',
     headers: { 
       Authorization: `Bearer ${token}`,

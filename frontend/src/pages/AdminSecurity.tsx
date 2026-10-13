@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Shield, Trash2 } from 'lucide-react'
 import { auth } from '../firebase'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 
 function AdminSecurity() {
   const navigate = useNavigate()
@@ -19,7 +20,7 @@ function AdminSecurity() {
   const fetchAdminSecurity = async () => {
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin`, {
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
       })
@@ -30,7 +31,6 @@ function AdminSecurity() {
 
       const data = await res.json()
       setQuestion(data.question || '')
-      setAnswers(data.rawAnswersStr || '')
       setReports(data.reports || [])
       setBanList(data.banList || [])
     } catch (err: any) {
@@ -52,7 +52,7 @@ function AdminSecurity() {
 
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +67,8 @@ function AdminSecurity() {
         throw new Error(data.error || 'Failed to update security gate config')
       }
 
-      setMessage('Bot Security Gate updated successfully! (Answers securely hashed)')
+      setAnswers('')
+      setMessage('Bot Security Gate updated successfully. Answers are not returned after saving.')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -82,7 +83,7 @@ function AdminSecurity() {
 
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin/reports/${reportId}`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin/reports/${reportId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ function AdminSecurity() {
 
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin/reports`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin/reports`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
@@ -143,7 +144,7 @@ function AdminSecurity() {
 
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin/bans/${encodeURIComponent(ip)}`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin/bans/${encodeURIComponent(ip)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
@@ -173,7 +174,7 @@ function AdminSecurity() {
 
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/security-gate/admin/bans`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/security-gate/admin/bans`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
@@ -221,7 +222,7 @@ function AdminSecurity() {
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-bold text-[var(--text1)] mb-1">Bot Security Gate Settings</h2>
         <p className="text-sm text-[var(--text2)] mb-5">
-          Customize the challenge question and acceptable answers. Answers are securely stored as salted PBKDF2 hashes.
+          Customize the challenge question and acceptable answers. Answers are stored as salted PBKDF2 hashes and cannot be viewed after saving.
         </p>
 
         <form onSubmit={handleSave} className="flex flex-col gap-4">
@@ -238,14 +239,13 @@ function AdminSecurity() {
           </label>
 
           <label className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm">
-            Acceptable Answers (Comma-separated aliases)
+            Replace Acceptable Answers (Comma-separated aliases)
             <input
               type="text"
               value={answers}
               onChange={(e) => setAnswers(e.target.value)}
               className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3"
-              placeholder="e.g. KanbaKan, kanbakan, Kanban"
-              required
+              placeholder="Leave blank to keep existing answers"
             />
           </label>
 

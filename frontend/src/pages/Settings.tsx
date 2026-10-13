@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { BACKEND_URL } from '../config'
+import { apiFetch } from '../api'
 
 const fetchProfile = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/profile`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/profile`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -15,7 +16,7 @@ const fetchProfile = async () => {
 
 const fetchUsers = async () => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/users`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/users`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include'
   })
@@ -25,7 +26,7 @@ const fetchUsers = async () => {
 
 const updateProfile = async (data: { name: string, username: string, superior: string }) => {
   const token = await auth.currentUser?.getIdToken()
-  const res = await fetch(`${BACKEND_URL}/api/profile`, {
+  const res = await apiFetch(`${BACKEND_URL}/api/profile`, {
     method: 'PATCH',
     headers: { 
       'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ function DangerZone() {
     setError('')
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`${BACKEND_URL}/api/profile`, {
+      const res = await apiFetch(`${BACKEND_URL}/api/profile`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
         credentials: 'include'
