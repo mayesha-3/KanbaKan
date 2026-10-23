@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
     res.json({
       uid: user.uid,
       email: user.email,
+      contactEmail: user.contactEmail || '',
       name: user.name,
       role: user.role,
       department: user.department || '',
@@ -60,7 +61,7 @@ router.patch('/', async (req, res) => {
   const firebaseUser = req.user
   if (!firebaseUser) return res.status(401).json({ error: 'Unauthorized' })
 
-  const { name, username, superior, email } = req.body
+  const { name, username, superior, contactEmail } = req.body
 
   try {
     const user = await User.findOne({ uid: firebaseUser.uid })
@@ -68,15 +69,12 @@ router.patch('/', async (req, res) => {
 
     if (name !== undefined) user.name = name
 
-    if (email !== undefined && email.trim() !== '') {
-      const cleanEmail = email.trim().toLowerCase()
-      if (cleanEmail !== user.email) {
-        const existing = await User.findOne({ email: cleanEmail, _id: { $ne: user._id } })
-        if (existing) {
-          return res.status(400).json({ error: 'Email address is already taken by another user' })
-        }
-        user.email = cleanEmail
+    if (contactEmail !== undefined) {
+      const cleanContactEmail = typeof contactEmail === 'string' ? contactEmail.trim().toLowerCase() : ''
+      if (cleanContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContactEmail)) {
+        return res.status(400).json({ error: 'Enter a valid contact email address' })
       }
+      user.contactEmail = cleanContactEmail
     }
     
     if (username !== undefined) {
@@ -108,6 +106,7 @@ router.patch('/', async (req, res) => {
     res.json({
       uid: user.uid,
       email: user.email,
+      contactEmail: user.contactEmail || '',
       name: user.name,
       role: user.role,
       department: user.department || '',

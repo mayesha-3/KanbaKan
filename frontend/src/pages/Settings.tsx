@@ -24,7 +24,7 @@ const fetchUsers = async () => {
   return res.json()
 }
 
-const updateProfile = async (data: { name: string, username: string, superior: string }) => {
+const updateProfile = async (data: { name: string, username: string, superior: string, contactEmail: string }) => {
   const token = await auth.currentUser?.getIdToken()
   const res = await apiFetch(`${BACKEND_URL}/api/profile`, {
     method: 'PATCH',
@@ -81,6 +81,7 @@ export default function Settings() {
       name: fd.get('name') as string,
       username: fd.get('username') as string,
       superior: fd.get('superior') as string,
+      contactEmail: fd.get('contactEmail') as string,
     })
   }
 
@@ -121,6 +122,18 @@ export default function Settings() {
               defaultValue={profile?.username || ''} 
               placeholder="e.g. johndoe" 
             />
+          </label>
+
+          <label className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm">
+            Contact Email
+            <input
+              className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3"
+              type="email"
+              name="contactEmail"
+              defaultValue={profile?.contactEmail || ''}
+              placeholder="e.g. johndoe@company.com"
+            />
+            <span className="font-normal text-xs text-[var(--text2)]">Shown to other members in the COC Tree.</span>
           </label>
           
           <label className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm">

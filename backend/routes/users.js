@@ -21,8 +21,8 @@ const router = express.Router()
 router.get('/', requireEmployee, async (req, res) => {
   try {
     let users = await User.find({})
-      .select('email name role department username superior isWarned uid')
-      .populate('superior', 'name email username')
+      .select('email contactEmail name role department username superior isWarned uid')
+      .populate('superior', 'name email contactEmail username')
       .lean()
 
     // Keep the admin list in sync with the email stored in Firebase Auth.

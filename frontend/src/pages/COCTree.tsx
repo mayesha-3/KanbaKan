@@ -10,10 +10,11 @@ type UserNode = {
   uid?: string
   name?: string
   email: string
+  contactEmail?: string
   username?: string
   role: string
   department?: string
-  superior?: { _id: string; name?: string; email?: string } | string | null
+  superior?: { _id: string; name?: string; email?: string; contactEmail?: string } | string | null
   children?: UserNode[]
 }
 
@@ -56,7 +57,9 @@ const TreeNode = ({ node, level = 0 }: { node: UserNode; level?: number }) => {
               <div className="font-semibold text-[var(--text1)] text-sm truncate">
                 {node.name || 'Unnamed User'}
               </div>
-              <div className="text-xs text-[var(--text2)] truncate">{node.email}</div>
+              {(node.contactEmail || node.email) && (
+                <div className="text-xs text-[var(--text2)] truncate">{node.contactEmail || node.email}</div>
+              )}
               {node.username && (
                 <div className="text-xs text-[var(--accent)] font-mono font-medium truncate">
                   @{node.username}
