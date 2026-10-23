@@ -96,6 +96,11 @@ export default function Settings() {
 
   // Filter out the current user from the superior options to prevent selecting oneself
   const availableSuperiors = users.filter((u: any) => u.uid !== profile?.uid)
+  // The profile email is a backend display value; Firebase Auth is the source
+  // of truth for the account's actual sign-in email.
+  const firebaseEmail = auth.currentUser?.email || ''
+  const displayedEmail = firebaseEmail || profile?.email || ''
+  const isInternalFallback = !firebaseEmail && displayedEmail.endsWith('@kanbankc.internal')
 
   return (
     <div className="max-w-xl mx-auto">
@@ -149,18 +154,18 @@ export default function Settings() {
           </div>
           <div className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm mb-4">
             <label className="flex items-center justify-between">
-              <span>Email Address</span>
-              {profile?.email?.endsWith('@kanbankc.internal') && (
+              <span>Firebase Email Address</span>
+              {isInternalFallback && (
                 <span className="text-xs text-amber-500 font-normal">Internal Placeholder</span>
               )}
             </label>
             <input 
               type="text" 
               readOnly 
-              value={profile?.email || ''} 
+              value={displayedEmail} 
               className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 opacity-60 cursor-not-allowed" 
             />
-            {profile?.email?.endsWith('@kanbankc.internal') && (
+            {isInternalFallback && (
               <p className="text-xs text-amber-500/90 font-normal">
                 ⚠️ Your email address was generated as an internal system fallback. An admin can update your official email address anytime in the Admin Dashboard.
               </p>
