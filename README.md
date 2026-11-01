@@ -1,5 +1,13 @@
 # KanbaKan
 
+## Public Demo
+
+The frontend currently opens as a public, no-login demo. It does not initialize Firebase or call the backend. It comes with fictional users, tasks, events, reports, and IP-ban examples so visitors can explore the main workflows immediately.
+
+Demo edits are saved only in the visitor’s browser and can be restored with **Reset sample data** in the sidebar. The Admin panel’s IP reports and ban list are simulations: the app does not collect visitor IP addresses or enforce network blocks.
+
+To deploy the demo on Vercel, set the project root to `frontend`; it builds with `npm run build` and outputs `dist`. No Firebase, database, or backend environment variables are needed for the demo. The backend code remains in this repository but is not used by the public demo frontend.
+
 KanbaKan is a lightweight, free-of-cost kanban task tracking system for teams of 20 to 30 people. It is designed around a practical free-tier technology stack, using free database services and free deployment options so the platform can be started without a large budget. The goal is to offer an organization-friendly task management system with planning, deadlines, role management, warnings, notifications, and clear team visibility.
 
 ## Why KanbaKan

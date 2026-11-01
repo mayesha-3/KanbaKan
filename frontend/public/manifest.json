@@ -1,7 +1,7 @@
 {
-  "name": "KanbaKan - Task & Sprint Platform",
+  "name": "KanbaKan — Interactive Demo",
   "short_name": "KanbaKan",
-  "description": "Production Task & Sprint Management System for KC Teams",
+  "description": "Explore KanbaKan with fictional sample data in an interactive demo workspace.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",

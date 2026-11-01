@@ -1,29 +1,8 @@
+import { handleDemoRequest } from './demoApi'
+
+// The public demo intentionally never calls the live API. Feature pages still
+// use the same request helpers, backed by browser-local sample data instead.
 export const SECURITY_GATE_EXPIRED_EVENT = 'kanbakan:security-gate-expired'
 
-export const apiFetch = async (
-  input: RequestInfo | URL,
-  init: RequestInit = {},
-): Promise<Response> => {
-  const headers = new Headers(init.headers)
-  const gateToken = localStorage.getItem('gateToken') || sessionStorage.getItem('gateToken')
-  if (gateToken) {
-    headers.set('x-gate-token', gateToken)
-  }
-
-  const response = await fetch(input, { ...init, headers })
-  if (response.status === 403) {
-    const data = await response.clone().json().catch(() => null)
-    if (
-      typeof data?.error === 'string' &&
-      data.error.startsWith('Security gate verification token')
-    ) {
-      localStorage.removeItem('gateToken')
-      localStorage.removeItem('securityGatePassed')
-      sessionStorage.removeItem('gateToken')
-      sessionStorage.removeItem('securityGatePassed')
-      window.dispatchEvent(new Event(SECURITY_GATE_EXPIRED_EVENT))
-    }
-  }
-
-  return response
-}
+export const apiFetch = (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> =>
+  handleDemoRequest(input, init)

@@ -1,20 +1,23 @@
-import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from 'firebase/auth'
-import { getMessaging } from 'firebase/messaging'
+import type { Auth, User, GoogleAuthProvider } from 'firebase/auth'
+import type { Messaging } from 'firebase/messaging'
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCO7z2cE8eomj6JVCFCflOeWcLLKBeaMHw',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'kanbankc.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'kanbankc',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'kanbankc.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1027071921414',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1027071921414:web:98749e1ba209db917ae287',
-}
+// Lightweight identity used by existing screens to populate the demo API.
+// No Firebase app is initialized and no credentials or account services load.
+const demoUser = {
+  uid: 'demo-admin-uid',
+  email: 'avery.stone@example.com',
+  displayName: 'Avery Stone',
+  getIdToken: async () => 'demo-token',
+} as User
 
-const app = initializeApp(firebaseConfig)
-const auth = getAuth(app)
-setPersistence(auth, browserLocalPersistence).catch(console.error)
-const googleProvider = new GoogleAuthProvider()
-const messaging = getMessaging(app)
+export const auth = {
+  currentUser: demoUser,
+  onAuthStateChanged: (listener: (user: User | null) => void) => {
+    queueMicrotask(() => listener(demoUser))
+    return () => undefined
+  },
+  signOut: async () => undefined,
+} as unknown as Auth
 
-export { app, auth, googleProvider, messaging }
+export const googleProvider = {} as GoogleAuthProvider
+export const messaging = {} as Messaging

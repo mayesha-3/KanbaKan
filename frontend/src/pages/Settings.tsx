@@ -100,7 +100,7 @@ export default function Settings() {
   // The profile email is a backend display value; Firebase Auth is the source
   // of truth for the account's actual sign-in email.
   const firebaseEmail = auth.currentUser?.email || ''
-  const displayedEmail = firebaseEmail || profile?.email || ''
+  const displayedEmail = profile?.email || firebaseEmail
   const isInternalFallback = !firebaseEmail && displayedEmail.endsWith('@kanbankc.internal')
 
   return (

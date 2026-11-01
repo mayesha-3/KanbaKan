@@ -207,7 +207,7 @@ function AdminSecurity() {
             <Shield className="text-[var(--accent)]" size={26} /> Security Administration
           </h1>
           <p className="text-sm text-[var(--text2)] mt-1">
-            Manage the bot challenge, review suspicious IP activity, and maintain the abuse log history.
+            Explore sample abuse reports and IP ban controls in the local demo workspace.
           </p>
         </div>
         <button
@@ -220,9 +220,9 @@ function AdminSecurity() {
       </div>
 
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-[var(--text1)] mb-1">Bot Security Gate Settings</h2>
+        <h2 className="text-lg font-bold text-[var(--text1)] mb-1">Demo Challenge Settings</h2>
         <p className="text-sm text-[var(--text2)] mb-5">
-          Customize the challenge question and acceptable answers. Answers are stored as salted PBKDF2 hashes and cannot be viewed after saving.
+          These controls only change sample data in this browser. The public demo has no login gate and does not verify or store real credentials.
         </p>
 
         <form onSubmit={handleSave} className="flex flex-col gap-4">

@@ -1,16 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, PieChart, Calendar, CalendarClock, LogOut, Settings as SettingsIcon, Network, Menu, X, Shield, AlertTriangle } from 'lucide-react'
-import { auth, googleProvider } from './firebase'
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  signInWithPopup,
-} from 'firebase/auth'
-import type { User } from 'firebase/auth'
-import { useFCM } from './hooks/useFCM'
+import { LayoutDashboard, Users, PieChart, Calendar, CalendarClock, Sparkles, Settings as SettingsIcon, Network, Menu, X, Shield, AlertTriangle } from 'lucide-react'
+import { resetDemoData } from './demoApi'
 
 import ThemeToggle from './components/ThemeToggle'
 import UserDashboard from './pages/UserDashboard'
@@ -23,9 +14,6 @@ import COCTree from './pages/COCTree'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminSecurity from './pages/AdminSecurity'
 import InstallPWA from './components/InstallPWA'
-import SecurityGate from './components/SecurityGate'
-import { BACKEND_URL } from './config'
-import { apiFetch, SECURITY_GATE_EXPIRED_EVENT } from './api'
 
 function BoardsHub() {
   const navigate = useNavigate()
@@ -65,204 +53,18 @@ function CalendarHub() {
   )
 }
 
-type UserProfile = {
-  uid: string
-  email: string | null
-  name?: string | null
-  role?: string
-  department?: string
-  isWarned?: boolean
-  position?: string
-}
-
 function App() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isSignup, setIsSignup] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [securityGatePassed, setSecurityGatePassed] = useState<boolean>(
-    () =>
-      localStorage.getItem('securityGatePassed') === 'true' ||
-      sessionStorage.getItem('securityGatePassed') === 'true'
-  )
-  const navigate = useNavigate()
   const location = useLocation()
-
-  useFCM(() => {
-    setProfile((currentProfile) => currentProfile ? { ...currentProfile, isWarned: true } : currentProfile)
-  })
-
-  useEffect(() => {
-    const handleGateExpired = () => {
-      // Authenticated users with active sessions should never be booted or interrupted by the security gate challenge
-      if (!auth.currentUser) {
-        setSecurityGatePassed(false)
-        setProfile(null)
-        setUser(null)
-      }
-    }
-
-    window.addEventListener(SECURITY_GATE_EXPIRED_EVENT, handleGateExpired)
-    return () => window.removeEventListener(SECURITY_GATE_EXPIRED_EVENT, handleGateExpired)
-  }, [])
-
-  const fetchSession = async (token: string) => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    }
-
-    const response = await apiFetch(`${BACKEND_URL}/api/auth/session`, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-    })
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.error || 'Failed to establish backend session')
-    }
-    return response.json() as Promise<UserProfile>
+  const profile = {
+    uid: 'demo-admin-uid',
+    email: 'avery.stone@example.com',
+    name: 'Avery Stone',
+    role: 'admin',
+    department: 'Operations',
+    position: 'Operations Admin',
+    isWarned: false,
   }
-
-  const handleGoogleSignIn = async () => {
-    setError(null)
-    setMessage('')
-    try {
-      await signInWithPopup(auth, googleProvider)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
-    }
-  }
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true)
-      setError(null)
-      setUser(currentUser)
-      if (currentUser) {
-        try {
-          const token = await currentUser.getIdToken(true)
-          const data = await fetchSession(token)
-          setProfile(data)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Unable to fetch profile')
-          setProfile(null)
-        }
-      } else {
-        setProfile(null)
-      }
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  const authForm = useMemo(() => {
-    const action = isSignup ? 'Create account' : 'Sign in'
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
-        <div className="w-full max-w-md">
-          <header className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-[var(--text1)]">KanbaKan</h1>
-            <p className="mt-2 text-[var(--text2)]">Login to continue</p>
-          </header>
-          <form
-            className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-7 shadow-xl flex flex-col gap-4"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              setError(null);
-              setMessage("");
-              try {
-                if (isSignup) {
-                  await createUserWithEmailAndPassword(auth, email, password);
-                } else {
-                  await signInWithEmailAndPassword(auth, email, password);
-                }
-                setEmail("");
-                setPassword("");
-              } catch (err) {
-                setError(
-                  err instanceof Error ? err.message : "Authentication failed",
-                );
-              }
-            }}>
-            <h2 className="text-xl font-bold text-[var(--text1)]">{action}</h2>
-            <label className="flex flex-col gap-2 font-semibold text-sm text-[var(--text1)]">
-              Email
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3"
-              />
-            </label>
-            <label className="flex flex-col gap-2 font-semibold text-sm text-[var(--text1)]">
-              Password
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                minLength={6}
-                className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3"
-              />
-            </label>
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-[var(--accent)] text-white font-semibold hover:opacity-90 transition-all duration-200 cursor-pointer">
-              {action}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignup(!isSignup);
-                setError(null);
-                setMessage("");
-              }}
-              className="w-full py-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text2)] font-medium hover:text-[var(--text1)] transition-all duration-200 cursor-pointer">
-              {isSignup
-                ? "Already have an account? Sign in"
-                : "Create a new account"}
-            </button>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              className="w-full py-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text1)] font-medium hover:border-[var(--accent)] transition-all duration-200 cursor-pointer">
-              Continue with Google
-            </button>
-          </form>
-          {message && (
-            <p className="mt-4 p-4 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-semibold text-center">
-              {message}
-            </p>
-          )}
-          {error && (
-            <p className="mt-4 p-4 rounded-xl bg-red-500/15 text-red-500 font-semibold text-center">
-              {error}
-            </p>
-          )}
-        </div>
-        <ThemeToggle />
-      </div>
-    );
-  }, [email, password, isSignup, message, error])
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-[var(--text2)]">Loading...</div>
-  }
-
-  if (!user || !profile) {
-    if (!securityGatePassed) {
-      return <SecurityGate onPassed={() => setSecurityGatePassed(true)} />
-    }
-    return authForm
-  }
-
   const navItems = [
     { path: '/boards', label: 'Boards', icon: <LayoutDashboard size={18} /> },
     { path: '/tree', label: 'COC Tree', icon: <Network size={18} /> },
@@ -326,14 +128,9 @@ function App() {
                 {profile.role}
               </span>
             </div>
-            <button
-              className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-transparent border border-[var(--border)] text-[var(--text2)] hover:bg-red-500/10 hover:text-red-400 hover:border-red-400/30 transition-all duration-200 cursor-pointer text-xs sm:text-sm"
-              onClick={async () => {
-                await signOut(auth);
-                navigate("/");
-              }}>
-              <LogOut size={15} />{" "}
-              <span className="hidden sm:inline">Sign out</span>
+            <button type="button" onClick={() => { resetDemoData(); window.location.reload() }} className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl border border-[var(--border)] text-[var(--text2)] hover:bg-[var(--border)]/50 text-xs sm:text-sm" title="Restore the seeded demo data">
+              <Sparkles size={15} />{" "}
+              <span className="hidden sm:inline">Reset demo</span>
             </button>
           </div>
         </header>
