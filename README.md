@@ -3,7 +3,8 @@
 KanbaKan is a lightweight, free-of-cost kanban task tracking system for teams of 20 to 30 people. It is designed around a practical free-tier technology stack, using free database services and free deployment options so the platform can be started without a large budget. The goal is to offer an organization-friendly task management system with planning, deadlines, role management, warnings, notifications, and clear team visibility.
 
 Here's a demo version to play around: https://kanbakan.netlify.app/ 
-[Security Features in Detail](./security_and_features_report.md)
+
+[Security Features in Detail here](./security_and_features_report.md)
 
 ## Why KanbaKan
 
