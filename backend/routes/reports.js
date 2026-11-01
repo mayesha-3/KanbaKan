@@ -33,6 +33,7 @@ const formatTaskForReport = (task) => {
     'Assignee': assigneeStr,
     'Priority': task.priority,
     'Status': task.status,
+    'Sprint': task.sprint !== undefined && task.sprint !== null ? task.sprint : '',
     'Created Date': task.createdAt.toISOString(),
     'Due Date': task.dueDate ? task.dueDate.toISOString() : '',
     'Completion Date': task.completedAt ? task.completedAt.toISOString() : '',

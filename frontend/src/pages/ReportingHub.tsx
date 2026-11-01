@@ -114,15 +114,18 @@ export default function ReportingHub() {
       15,
     );
     
-    const head = [['ID', 'Title', 'Assignee', 'Status', 'Priority', 'Completed']]
-    const body = displayedData.map(row => [
-      row['Task ID'].substring(row['Task ID'].length - 6), // abbreviate ID
-      row['Title'],
-      row['Assignee'],
-      row['Status'],
-      row['Priority'],
-      row['Completion Date'] ? new Date(row['Completion Date']).toLocaleDateString() : ''
-    ])
+    const head = [['ID', 'Title', 'Assignee', 'Status', 'Priority', 'Sprint', 'Completed']]
+    const body = displayedData.map((row) => [
+      row["Task ID"].substring(row["Task ID"].length - 6), // abbreviate ID
+      row["Title"],
+      row["Assignee"],
+      row["Status"],
+      row["Priority"],
+      row["Sprint"] !== undefined && row["Sprint"] !== null && row["Sprint"] !== '' ? String(row["Sprint"]) : '-',
+      row["Completion Date"]
+        ? new Date(row["Completion Date"]).toLocaleDateString()
+        : "",
+    ]);
 
     autoTable(doc, {
       head,
@@ -139,27 +142,34 @@ export default function ReportingHub() {
   return (
     <div className="flex flex-col h-full space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text1)]">Reporting & Analytics</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text1)]">
+          Reporting & Analytics
+        </h2>
       </div>
 
       <div className="bg-[var(--surface)] border border-[var(--border)] p-4 sm:p-6 rounded-2xl">
-        <h3 className="text-[var(--text1)] font-bold mt-0 mb-3 text-sm sm:text-base">Report Configuration</h3>
+        <h3 className="text-[var(--text1)] font-bold mt-0 mb-3 text-sm sm:text-base">
+          Report Configuration
+        </h3>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end w-full">
           <label className="flex-1 flex flex-col gap-1.5 font-semibold text-[var(--text1)] text-xs sm:text-sm">
             Scope
             <select
               value={scope}
-              onChange={e => {
-                const val = e.target.value as 'self' | 'org'
-                if (val === 'org' && !isLeaderOrAdmin) return
-                setScope(val)
+              onChange={(e) => {
+                const val = e.target.value as "self" | "org";
+                if (val === "org" && !isLeaderOrAdmin) return;
+                setScope(val);
               }}
               disabled={!isLeaderOrAdmin}
-              title={!isLeaderOrAdmin ? 'Only Leaders and Admins can view Organization reports' : undefined}
+              title={
+                !isLeaderOrAdmin
+                  ? "Only Leaders and Admins can view Organization reports"
+                  : undefined
+              }
               className={`w-full px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)] ${
-                !isLeaderOrAdmin ? 'opacity-80 cursor-not-allowed' : ''
-              }`}
-            >
+                !isLeaderOrAdmin ? "opacity-80 cursor-not-allowed" : ""
+              }`}>
               <option value="self">My Tasks</option>
               {isLeaderOrAdmin && (
                 <option value="org">Organization Tasks (Admin/Leader)</option>
@@ -167,7 +177,7 @@ export default function ReportingHub() {
             </select>
           </label>
 
-          {scope === 'org' && (
+          {scope === "org" && (
             <label className="flex-1 flex flex-col gap-1.5 font-semibold text-[var(--text1)] text-xs sm:text-sm">
               Filter by Username / User
               <div className="flex gap-2">
@@ -175,23 +185,26 @@ export default function ReportingHub() {
                   type="text"
                   placeholder="Type username or select..."
                   value={usernameFilter}
-                  onChange={e => setUsernameFilter(e.target.value)}
+                  onChange={(e) => setUsernameFilter(e.target.value)}
                   className="w-full px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)]"
                 />
                 {usersList.length > 0 && (
                   <select
                     value={usernameFilter}
-                    onChange={e => setUsernameFilter(e.target.value)}
-                    className="w-auto px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)] cursor-pointer"
-                  >
+                    onChange={(e) => setUsernameFilter(e.target.value)}
+                    className="w-auto px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)] cursor-pointer">
                     <option value="">All Users</option>
-                    {usersList.map(u => {
-                      const val = u.username ? `@${u.username}` : (u.email || u.name)
+                    {usersList.map((u) => {
+                      const val = u.username
+                        ? `@${u.username}`
+                        : u.email || u.name;
                       return (
                         <option key={u._id} value={val}>
-                          {u.name || u.email}{u.position ? ` [${u.position}]` : ''} {u.username ? `(@${u.username})` : ''}
+                          {u.name || u.email}
+                          {u.position ? ` [${u.position}]` : ""}{" "}
+                          {u.username ? `(@${u.username})` : ""}
                         </option>
-                      )
+                      );
                     })}
                   </select>
                 )}
@@ -199,23 +212,35 @@ export default function ReportingHub() {
             </label>
           )}
 
-          <button className="w-full sm:w-auto px-4 py-2 bg-[var(--accent)] text-white rounded-xl font-semibold text-xs sm:text-sm hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0" onClick={handlePreview} disabled={loading}>
-            {loading ? 'Loading...' : 'Preview Data'}
+          <button
+            className="w-full sm:w-auto px-4 py-2 bg-[var(--accent)] text-white rounded-xl font-semibold text-xs sm:text-sm hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0"
+            onClick={handlePreview}
+            disabled={loading}>
+            {loading ? "Loading..." : "Preview Data"}
           </button>
         </div>
-        {error && <p className="text-red-500 font-semibold text-xs sm:text-sm mt-3">{error}</p>}
+        {error && (
+          <p className="text-red-500 font-semibold text-xs sm:text-sm mt-3">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="flex-1 flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sm:p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
           <h3 className="m-0 text-[var(--text1)] font-bold text-sm sm:text-base flex items-center gap-2">
-            Data Preview <span className="text-xs font-normal text-[var(--text2)]">({displayedData.length} records)</span>
+            Data Preview{" "}
+            <span className="text-xs font-normal text-[var(--text2)]">
+              ({displayedData.length} records)
+            </span>
           </h3>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* <button className="flex-1 sm:flex-none bg-emerald-600 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 hover:opacity-90 transition-all cursor-pointer" onClick={exportCSV}>
               <Download size={14} /> Export CSV
             </button> */}
-            <button className="flex-1 sm:flex-none bg-rose-600 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 hover:opacity-90 transition-all cursor-pointer" onClick={exportPDF}>
+            <button
+              className="flex-1 sm:flex-none bg-rose-600 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 hover:opacity-90 transition-all cursor-pointer"
+              onClick={exportPDF}>
               <FileText size={14} /> Export PDF
             </button>
           </div>
@@ -225,26 +250,74 @@ export default function ReportingHub() {
           <table className="w-full text-left text-sm border-collapse">
             <thead className="bg-[var(--bg)] sticky top-0">
               <tr>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Title</th>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Assignee</th>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Status</th>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Priority</th>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Completion Date</th>
-                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">Time to Complete (Hrs)</th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Title
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Assignee
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Status
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Priority
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Sprint
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Completion Date
+                </th>
+                <th className="px-3 py-3 text-[var(--text2)] font-semibold border-b border-[var(--border)]/50">
+                  Time to Complete (Hrs)
+                </th>
               </tr>
             </thead>
             <tbody>
               {displayedData.length === 0 ? (
-                <tr><td colSpan={6} className="py-6 text-center text-[var(--text2)]">No data matching filter.</td></tr>
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="py-6 text-center text-[var(--text2)]">
+                    No data matching filter.
+                  </td>
+                </tr>
               ) : (
                 displayedData.map((row, i) => (
                   <tr key={i} className="hover:bg-[var(--bg)] transition-all">
-                    <td className="px-3 py-3 text-[var(--text1)] border-b border-[var(--border)]/50">{row['Title']}</td>
-                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">{row['Assignee']}</td>
-                    <td className="px-3 py-3 border-b border-[var(--border)]/50"><span className="text-xs px-2 py-1 bg-[var(--border)] text-[var(--text1)] rounded-full">{row['Status']}</span></td>
-                    <td className="px-3 py-3 border-b border-[var(--border)]/50"><span className="text-xs px-2 py-1 bg-[var(--border)] text-[var(--text1)] rounded-full">{row['Priority']}</span></td>
-                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">{row['Completion Date'] ? new Date(row['Completion Date']).toLocaleDateString() : '-'}</td>
-                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">{row['Time-to-Complete (Hours)'] || '-'}</td>
+                    <td className="px-3 py-3 text-[var(--text1)] border-b border-[var(--border)]/50">
+                      {row["Title"]}
+                    </td>
+                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">
+                      {row["Assignee"]}
+                    </td>
+                    <td className="px-3 py-3 border-b border-[var(--border)]/50">
+                      <span className="text-xs px-2 py-1 bg-[var(--border)] text-[var(--text1)] rounded-full">
+                        {row["Status"]}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 border-b border-[var(--border)]/50">
+                      <span className="text-xs px-2 py-1 bg-[var(--border)] text-[var(--text1)] rounded-full">
+                        {row["Priority"]}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">
+                      {row["Sprint"] !== undefined && row["Sprint"] !== null && row["Sprint"] !== '' ? (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30">
+                          {row["Sprint"]}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">
+                      {row["Completion Date"]
+                        ? new Date(row["Completion Date"]).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="px-3 py-3 text-[var(--text2)] border-b border-[var(--border)]/50">
+                      {row["Time-to-Complete (Hours)"] || "-"}
+                    </td>
                   </tr>
                 ))
               )}
@@ -253,5 +326,5 @@ export default function ReportingHub() {
         </div>
       </div>
     </div>
-  )
+  );
 }
