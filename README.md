@@ -2,6 +2,8 @@
 
 KanbaKan is a lightweight, free-of-cost kanban task tracking system for teams of 20 to 30 people. It is designed around a practical free-tier technology stack, using free database services and free deployment options so the platform can be started without a large budget. The goal is to offer an organization-friendly task management system with planning, deadlines, role management, warnings, notifications, and clear team visibility.
 
+Here's a demo version to play around: https://kanbakan.netlify.app/ 
+
 ## Why KanbaKan
 
 KanbaKan is built to give a simple but powerful project workflow for organizations that need a kanban board, calendars, user roles, and admin oversight without paying for premium software. This repository uses free services such as Firebase for authentication and messaging, MongoDB Atlas free-tier database provider, and Vercel + Render free deploy targets for the frontend and backend. Cron-job.org was configured to periodically ping the backend, preventing hibernation and cold starts after 15 minutes of inactivity.
@@ -20,9 +22,24 @@ The repository is separated into three main areas:
 
 The frontend is built with Vite, React, TypeScript, Tailwind styling, and Firebase integration. It contains the kanban board pages, organization dashboards, reports, planning and calendar views, settings, and admin screens.
 
+Local Deploy:
+```
+cd frontend
+npm install
+npm run build
+npm run dev
+```
+
 ### Backend
 
 The backend is an Express server with Mongoose models, Firebase Admin authentication hooks, role-based route middleware, task APIs, event APIs, calendar/deadline automation, and notification logic.
+
+Local Deploy:
+```
+cd backend
+npm install
+npm start
+```
 
 ### Shared
 
@@ -53,8 +70,10 @@ This implementation is organized around low-cost or free deployment and database
 
 1. Install the backend dependencies in `backend/`.
 2. Install the frontend dependencies in `frontend/`.
-3. Configure environment variables for MongoDB access, Firebase, and deployment URLs.
-4. Run the backend server and start the Vite frontend.
+3. Configure environment variables for MongoDB access, and Firebase.
+4. Deploy the Backend to Render
+5. Deploy the Frontend to Vercel
+6. Set a cronjob at backends /health
 
 ## Production Theme
 
