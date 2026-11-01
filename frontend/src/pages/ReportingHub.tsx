@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { FileText } from 'lucide-react'
 import jsPDF from 'jspdf'
@@ -13,6 +14,30 @@ export default function ReportingHub() {
   const [previewData, setPreviewData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) return null
+      const res = await apiFetch(`${BACKEND_URL}/api/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      })
+      if (!res.ok) return null
+      return res.json()
+    },
+  })
+
+  const currentUserRole = profile?.role?.toLowerCase()
+  const isLeaderOrAdmin = currentUserRole === 'admin' || currentUserRole === 'leader'
+
+  // Safety: If an employee ever has scope set to 'org', immediately reset to 'self'
+  useEffect(() => {
+    if (profile && !isLeaderOrAdmin && scope === 'org') {
+      setScope('self')
+    }
+  }, [profile, isLeaderOrAdmin, scope])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -34,6 +59,11 @@ export default function ReportingHub() {
   }, [])
 
   const handlePreview = async () => {
+    if (scope === 'org' && !isLeaderOrAdmin) {
+      setError('Only Leaders and Admins have permission to view organization reports.')
+      return
+    }
+
     setLoading(true)
     setError('')
     try {
@@ -117,9 +147,23 @@ export default function ReportingHub() {
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end w-full">
           <label className="flex-1 flex flex-col gap-1.5 font-semibold text-[var(--text1)] text-xs sm:text-sm">
             Scope
-            <select value={scope} onChange={e => setScope(e.target.value as any)} className="w-full px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)]">
+            <select
+              value={scope}
+              onChange={e => {
+                const val = e.target.value as 'self' | 'org'
+                if (val === 'org' && !isLeaderOrAdmin) return
+                setScope(val)
+              }}
+              disabled={!isLeaderOrAdmin}
+              title={!isLeaderOrAdmin ? 'Only Leaders and Admins can view Organization reports' : undefined}
+              className={`w-full px-3 py-2 bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] rounded-xl text-xs sm:text-sm outline-none focus:border-[var(--accent)] ${
+                !isLeaderOrAdmin ? 'opacity-80 cursor-not-allowed' : ''
+              }`}
+            >
               <option value="self">My Tasks</option>
-              <option value="org">Organization Tasks (Admin/C-Grade)</option>
+              {isLeaderOrAdmin && (
+                <option value="org">Organization Tasks (Admin/Leader)</option>
+              )}
             </select>
           </label>
 
@@ -145,7 +189,7 @@ export default function ReportingHub() {
                       const val = u.username ? `@${u.username}` : (u.email || u.name)
                       return (
                         <option key={u._id} value={val}>
-                          {u.name || u.email} {u.username ? `(@${u.username})` : ''}
+                          {u.name || u.email}{u.position ? ` [${u.position}]` : ''} {u.username ? `(@${u.username})` : ''}
                         </option>
                       )
                     })}

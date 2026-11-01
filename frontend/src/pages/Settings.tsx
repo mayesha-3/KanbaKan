@@ -142,7 +142,7 @@ export default function Settings() {
               <option value="">None (Top Level)</option>
               {availableSuperiors.map((u: any) => (
                 <option key={u._id} value={u._id}>
-                  {u.name || u.email} [{u.role}] {u.username ? `(@${u.username})` : ''}
+                  {u.name || u.email}{u.position ? ` [${u.position}]` : ''} [{u.role}] {u.username ? `(@${u.username})` : ''}
                 </option>
               ))}
             </select>
@@ -187,6 +187,13 @@ export default function Settings() {
           <div className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm">
             <label>System Role</label>
             <input type="text" readOnly value={profile?.role || 'employee'} className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 opacity-60 cursor-not-allowed capitalize" />
+          </div>
+          <div className="flex flex-col gap-2 font-semibold text-[var(--text1)] text-sm mt-4">
+            <label className="flex items-center justify-between">
+              <span>Position</span>
+              <span className="text-xs text-[var(--text2)] font-normal">Assigned by Admin</span>
+            </label>
+            <input type="text" readOnly value={profile?.position || 'Not assigned'} className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 opacity-60 cursor-not-allowed" />
           </div>
         </div>
 

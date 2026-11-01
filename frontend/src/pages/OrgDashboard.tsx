@@ -296,7 +296,7 @@ export default function OrgDashboard() {
             <option value="">All Assignees</option>
             {users.map((u: any) => (
               <option key={u._id} value={u._id}>
-                {u.name || u.email} [{u.role}]
+                {u.name || u.email}{u.position ? ` [${u.position}]` : ''} [{u.role}]
               </option>
             ))}
           </select>
@@ -316,8 +316,8 @@ export default function OrgDashboard() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {columnTasks.map((task: any) => {
                     const isCreator = task.createdBy?.uid === currentUserUid
-                    const isAdminOrCgrade = currentUserRole === 'admin' || currentUserRole === 'cgrade'
-                    const canModify = isCreator || isAdminOrCgrade
+                    const isAdminOrLeader = currentUserRole === 'admin' || currentUserRole === 'Leader'
+                    const canModify = isCreator || isAdminOrLeader
                     const stale = isStale(task)
 
                     return (
@@ -331,9 +331,9 @@ export default function OrgDashboard() {
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(task.priority)}`}>
                             {task.priority}
                           </span>
-                          <span className="text-sm text-[var(--text2)] truncate max-w-[120px]" title={task.assignees?.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ')}>
+                          <span className="text-sm text-[var(--text2)] truncate max-w-[120px]" title={task.assignees?.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ')}>
                             {task.assignees && task.assignees.length > 0
-                              ? task.assignees.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ') 
+                              ? task.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
                               : 'Unassigned'}
                           </span>
                           {task.link && <span title={task.link}><Link2 size={13} className="text-[var(--accent)] flex-shrink-0" /></span>}
@@ -402,7 +402,7 @@ export default function OrgDashboard() {
                         <option value="">Select Assignee...</option>
                         {users.map((u: any) => (
                           <option key={u._id} value={u._id}>
-                            {u.name || u.email} {u.username ? `(@${u.username})` : `[${u.role}]`}
+                            {u.name || u.email}{u.position ? ` [${u.position}]` : ''} {u.username ? `(@${u.username})` : `[${u.role}]`}
                           </option>
                         ))}
                       </select>
@@ -463,7 +463,7 @@ export default function OrgDashboard() {
                 <p className="text-[var(--text1)]">
                   <strong className="text-[var(--text2)]">Assignees:</strong>{' '}
                   {selectedTask.assignees && selectedTask.assignees.length > 0 
-                    ? selectedTask.assignees.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ') 
+                    ? selectedTask.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
                     : 'Unassigned'}
                 </p>
                 <p className="text-[var(--text1)] flex items-center gap-2">
@@ -497,7 +497,7 @@ export default function OrgDashboard() {
                     comments.map((comment: any) => (
                       <div key={comment._id} className="bg-[var(--bg)] p-4 rounded-xl border border-[var(--border)]">
                         <div className="flex justify-between items-center mb-2">
-                          <strong className="text-[var(--text1)] text-sm">{comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}</strong>
+                          <strong className="text-[var(--text1)] text-sm">{comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}{comment.author?.position ? ` [${comment.author.position}]` : ''}</strong>
                           <span className="text-xs text-[var(--text2)]">{new Date(comment.timestamp).toLocaleString()}</span>
                         </div>
                         <p className="text-[var(--text1)] text-sm">{comment.content}</p>

@@ -1,6 +1,7 @@
 import express from 'express'
 import User from '../models/User.js'
 import { findOrCreateOrBindUser, purgeUserCompletely } from '../utils/userUtils.js'
+import { isPermanentAdmin } from '../middleware/rbac.js'
 
 const router = express.Router()
 
@@ -23,6 +24,7 @@ router.get('/', async (req, res) => {
       username: user.username || '',
       superior: user.superior || null,
       isWarned: !!user.isWarned,
+      position: user.position || '',
     })
   } catch (error) {
     console.error('Profile route error:', error)
@@ -113,6 +115,7 @@ router.patch('/', async (req, res) => {
       username: user.username || '',
       superior: user.superior || null,
       isWarned: !!user.isWarned,
+      position: user.position || '',
     })
   } catch (error) {
     console.error('Profile update error:', error)
@@ -132,6 +135,10 @@ router.delete('/', async (req, res) => {
       ],
     })
     if (!user) return res.status(404).json({ error: 'User not found' })
+
+    if (isPermanentAdmin(user.email) || isPermanentAdmin(firebaseUser.email)) {
+      return res.status(400).json({ error: 'Cannot delete the permanent admin account' })
+    }
 
     await purgeUserCompletely(user)
 

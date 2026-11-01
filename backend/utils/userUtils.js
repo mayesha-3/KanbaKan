@@ -2,6 +2,7 @@ import { getAuth } from 'firebase-admin/auth'
 import User from '../models/User.js'
 import Task from '../models/Task.js'
 import { clearUserCache } from '../middleware/auth.js'
+import { isPermanentAdmin, PERMANENT_ADMIN_EMAIL } from '../middleware/rbac.js'
 
 /**
  * Robustly find, bind, or create a MongoDB user record from a Firebase auth token payload.
@@ -46,6 +47,12 @@ export const findOrCreateOrBindUser = async (firebaseUser) => {
       user.role = firebaseUser.role
       modified = true
     }
+    if (isPermanentAdmin(cleanEmail) || isPermanentAdmin(user.email)) {
+      if (user.role !== 'admin') {
+        user.role = 'admin'
+        modified = true
+      }
+    }
     if (modified) {
       await user.save()
     }
@@ -60,6 +67,9 @@ export const findOrCreateOrBindUser = async (firebaseUser) => {
       if (firebaseUser.name && !user.name) {
         user.name = firebaseUser.name
       }
+      if (isPermanentAdmin(cleanEmail)) {
+        user.role = 'admin'
+      }
       await user.save()
     }
   }
@@ -69,9 +79,19 @@ export const findOrCreateOrBindUser = async (firebaseUser) => {
     user = await User.create({
       uid: firebaseUser.uid,
       email: defaultEmail,
-      name: firebaseUser.name || '',
-      role: firebaseUser.role || 'employee',
+      name: firebaseUser.name || (isPermanentAdmin(cleanEmail) ? 'Admin' : ''),
+      role: isPermanentAdmin(cleanEmail) ? 'admin' : (firebaseUser.role || 'employee'),
+      position: isPermanentAdmin(cleanEmail) ? 'Admin' : '',
     })
+  }
+
+  // Guarantee custom claims for the permanent admin
+  if (isPermanentAdmin(cleanEmail) || isPermanentAdmin(user.email)) {
+    try {
+      await getAuth().setCustomUserClaims(firebaseUser.uid, { role: 'admin' })
+    } catch (claimErr) {
+      console.warn('Could not set custom claims for permanent admin:', claimErr.message)
+    }
   }
 
   clearUserCache(user.uid)
@@ -84,6 +104,9 @@ export const findOrCreateOrBindUser = async (firebaseUser) => {
  */
 export const purgeUserCompletely = async (user) => {
   if (!user) return
+  if (isPermanentAdmin(user.email)) {
+    throw new Error('Cannot purge the permanent admin account')
+  }
 
   // 1. Delete from Firebase Auth
   if (user.uid) {
@@ -126,3 +149,60 @@ export const purgeUserCompletely = async (user) => {
     clearUserCache(user.uid)
   }
 }
+
+/**
+ * Startup hook to ensure permanent admin exists, is synced, and has admin claims in Firebase & MongoDB.
+ */
+export const ensurePermanentAdmin = async () => {
+  try {
+    const cleanEmail = PERMANENT_ADMIN_EMAIL.toLowerCase()
+    let dbUser = await User.findOne({ email: cleanEmail })
+
+    let fbUser = null
+    try {
+      fbUser = await getAuth().getUserByEmail(cleanEmail)
+    } catch (fbErr) {
+      // Admin may not have registered in Firebase yet
+    }
+
+    if (fbUser) {
+      try {
+        await getAuth().setCustomUserClaims(fbUser.uid, { role: 'admin' })
+      } catch (claimErr) {
+        console.warn('Failed to set claims for permanent admin on startup:', claimErr.message)
+      }
+
+      if (!dbUser) {
+        dbUser = await User.create({
+          uid: fbUser.uid,
+          email: cleanEmail,
+          name: fbUser.displayName || 'Admin',
+          role: 'admin',
+          position: 'Admin',
+        })
+        console.log(`[Permanent Admin] Created MongoDB record for ${cleanEmail}`)
+      } else {
+        let modified = false
+        if (dbUser.uid !== fbUser.uid) {
+          dbUser.uid = fbUser.uid
+          modified = true
+        }
+        if (dbUser.role !== 'admin') {
+          dbUser.role = 'admin'
+          modified = true
+        }
+        if (modified) {
+          await dbUser.save()
+          console.log(`[Permanent Admin] Synced MongoDB record for ${cleanEmail}`)
+        }
+      }
+    } else if (dbUser && dbUser.role !== 'admin') {
+      dbUser.role = 'admin'
+      await dbUser.save()
+      console.log(`[Permanent Admin] Updated role to admin for ${cleanEmail}`)
+    }
+  } catch (err) {
+    console.warn('[Permanent Admin] Initialization check error:', err.message)
+  }
+}
+

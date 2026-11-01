@@ -1,5 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
 import User from "../models/User.js";
+import { isPermanentAdmin } from "./rbac.js";
 
 const USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const userCache = new Map();
@@ -31,11 +32,12 @@ export const verifyFirebaseToken = async (req, res, next) => {
     const uid = decodedToken.uid;
     const cachedUser = userCache.get(uid);
 
+    let dbUser = null;
     if (cachedUser && cachedUser.expiresAt > Date.now()) {
       req.user.role = cachedUser.role;
       req.user.dbId = cachedUser.dbId;
     } else {
-      const dbUser = await User.findOne({ uid }).select("role _id").lean();
+      dbUser = await User.findOne({ uid }).select("role _id email").lean();
       if (dbUser) {
         req.user.role = dbUser.role;
         req.user.dbId = dbUser._id;
@@ -46,6 +48,20 @@ export const verifyFirebaseToken = async (req, res, next) => {
         });
       } else {
         req.user.role = decodedToken.role || "employee";
+      }
+    }
+
+    if (
+      isPermanentAdmin(decodedToken.email) ||
+      isPermanentAdmin(req.user.email) ||
+      (dbUser && isPermanentAdmin(dbUser.email))
+    ) {
+      req.user.role = "admin";
+      if (userCache.has(uid)) {
+        userCache.get(uid).role = "admin";
+      }
+      if (dbUser && dbUser.role !== "admin") {
+        User.updateOne({ _id: dbUser._id }, { role: "admin" }).catch(() => {});
       }
     }
 

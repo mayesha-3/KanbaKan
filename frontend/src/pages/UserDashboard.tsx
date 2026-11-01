@@ -335,7 +335,7 @@ export default function UserDashboard() {
                         </span>
                         <span className="truncate max-w-[120px]">
                           {task.assignees && task.assignees.length > 0
-                            ? task.assignees.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ') 
+                            ? task.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
                             : 'Unassigned'}
                         </span>
                         {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
@@ -401,7 +401,7 @@ export default function UserDashboard() {
                         <option value="">Select Assignee...</option>
                         {users.map((u: any) => (
                           <option key={u._id} value={u._id}>
-                            {u.name || u.email} {u.username ? `(@${u.username})` : `[${u.role}]`}
+                            {u.name || u.email}{u.position ? ` [${u.position}]` : ''} {u.username ? `(@${u.username})` : `[${u.role}]`}
                           </option>
                         ))}
                       </select>
@@ -473,7 +473,7 @@ export default function UserDashboard() {
                         <option value="">Select Assignee...</option>
                         {users.map((u: any) => (
                           <option key={u._id} value={u._id}>
-                            {u.name || u.email} {u.username ? `(@${u.username})` : `[${u.role}]`}
+                            {u.name || u.email}{u.position ? ` [${u.position}]` : ''} {u.username ? `(@${u.username})` : `[${u.role}]`}
                           </option>
                         ))}
                       </select>
@@ -530,7 +530,7 @@ export default function UserDashboard() {
               <p>
                 <strong className="text-[var(--text2)] mr-2">Assignees:</strong>
                 {selectedTask.assignees && selectedTask.assignees.length > 0 
-                  ? selectedTask.assignees.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ') 
+                  ? selectedTask.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
                   : 'Unassigned'}
               </p>
               <p>
@@ -560,7 +560,7 @@ export default function UserDashboard() {
                   comments.map((comment: any) => (
                     <div key={comment._id} className="bg-[var(--bg)] rounded-xl p-3 text-sm text-[var(--text1)] border border-[var(--border)]">
                       <div className="flex justify-between items-center mb-1">
-                        <strong className="text-[var(--accent)] font-semibold">{comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}</strong>
+                        <strong className="text-[var(--accent)] font-semibold">{comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}{comment.author?.position ? ` [${comment.author.position}]` : ''}</strong>
                         <span className="text-xs text-[var(--text2)]">{new Date(comment.timestamp).toLocaleString()}</span>
                       </div>
                       <p className="whitespace-pre-wrap">{comment.content}</p>

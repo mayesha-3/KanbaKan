@@ -1,7 +1,7 @@
 import express from 'express'
 import Event from '../models/Event.js'
 import User from '../models/User.js'
-import { requireAdmin, requireCgrade, requireEmployee } from '../middleware/rbac.js'
+import { requireAdmin, requireLeader, requireEmployee } from '../middleware/rbac.js'
 import { sendNotificationToUsers } from '../utils/messaging.js'
 
 const router = express.Router()

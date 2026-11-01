@@ -12,8 +12,8 @@ type UserNode = {
   email: string
   contactEmail?: string
   username?: string
-  role: string
   department?: string
+  position?: string
   superior?: { _id: string; name?: string; email?: string; contactEmail?: string } | string | null
   children?: UserNode[]
 }
@@ -33,15 +33,21 @@ const TreeNode = ({ node, level = 0 }: { node: UserNode; level?: number }) => {
   const [isExpanded, setIsExpanded] = useState(true)
   const hasChildren = node.children && node.children.length > 0
 
-  const getRoleBadge = (role: string) => {
-    switch (role?.toLowerCase()) {
-      case 'admin':
-        return 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border-purple-500/30'
-      case 'cgrade':
-        return 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30'
-      default:
-        return 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30'
+  const getPositionBadge = (position?: string) => {
+    if (!position || !position.trim()) {
+      return 'bg-[var(--bg)] text-[var(--text2)] border-[var(--border)]'
     }
+    const pos = position.trim().toLowerCase()
+    if (pos.includes('ceo')) return 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30'
+    if (pos.includes('coo')) return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30'
+    if (pos.includes('cto')) return 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border-cyan-500/30'
+    if (pos.includes('admin')) return 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30'
+    if (pos.includes('founder')) return 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border-purple-500/30'
+    if (pos.includes('leader') || pos === 'lead') return 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-300 border-yellow-500/30'
+    if (pos.includes('manager') || pos.includes('director')) return 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-500/30'
+    if (pos.includes('superior intern')) return 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30'
+    if (pos.includes('intern')) return 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border-teal-500/30'
+    return 'bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/30'
   }
 
   return (
@@ -68,17 +74,19 @@ const TreeNode = ({ node, level = 0 }: { node: UserNode; level?: number }) => {
             </div>
           </div>
 
+          {/* Bottom Card Footer: Position Badge + Department */}
           <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2 text-xs">
             <span
-              className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${getRoleBadge(
-                node.role
+              className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider truncate max-w-[140px] ${getPositionBadge(
+                node.position
               )}`}
+              title={node.position || 'No Position'}
             >
-              {node.role === 'cgrade' ? 'C-Grade' : node.role}
+              {node.position?.trim() ? node.position : 'No Position'}
             </span>
             {node.department && (
               <span className="text-[11px] text-[var(--text2)] truncate flex items-center gap-1">
-                <Briefcase size={12} /> {node.department}
+                <Briefcase size={12} className="shrink-0" /> {node.department}
               </span>
             )}
           </div>

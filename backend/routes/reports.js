@@ -3,7 +3,7 @@ import { Transform } from 'stream'
 import { AsyncParser } from 'json2csv'
 import Task from '../models/Task.js'
 import User from '../models/User.js'
-import { requireCgrade, requireEmployee } from '../middleware/rbac.js'
+import { requireLeader, requireEmployee } from '../middleware/rbac.js'
 
 const router = express.Router()
 
@@ -65,7 +65,7 @@ const streamTasksToCSV = (cursor, res) => {
 }
 
 // GET /api/reports/org
-router.get('/org', requireEmployee, async (req, res) => {
+router.get('/org', requireLeader, async (req, res) => {
   const { format, username } = req.query
   const filter = { isDeleted: false }
   

@@ -425,7 +425,7 @@ export default function PlanningHub() {
                 {selectedEvent.createdBy && (
                   <div>
                     <p className="text-xs text-[var(--text2)] uppercase tracking-wider font-semibold mb-1">Created By</p>
-                    <p className="text-sm">{selectedEvent.createdBy.name || selectedEvent.createdBy.email}</p>
+                    <p className="text-sm">{selectedEvent.createdBy.name || selectedEvent.createdBy.email}{selectedEvent.createdBy.position ? ` [${selectedEvent.createdBy.position}]` : ''}</p>
                   </div>
                 )}
               </div>

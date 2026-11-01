@@ -1,7 +1,8 @@
 import express from 'express'
 import { getAuth } from 'firebase-admin/auth'
 import User from '../models/User.js'
-import { roles, requireAdmin, requireEmployee } from '../middleware/rbac.js'
+import SystemConfig from '../models/SystemConfig.js'
+import { roles, requireAdmin, requireEmployee, isPermanentAdmin } from '../middleware/rbac.js'
 import { clearUserCache } from '../middleware/auth.js'
 import { sendNotificationToUsers } from '../utils/messaging.js'
 import { purgeUserCompletely } from '../utils/userUtils.js'
@@ -21,7 +22,7 @@ const router = express.Router()
 router.get('/', requireEmployee, async (req, res) => {
   try {
     let users = await User.find({})
-      .select('email contactEmail name role department username superior isWarned uid')
+      .select('email contactEmail name role department username superior isWarned uid position')
       .populate('superior', 'name email contactEmail username')
       .lean()
 
@@ -54,6 +55,13 @@ router.get('/', requireEmployee, async (req, res) => {
     })
 
     users = await Promise.all(healingPromises)
+    users = users.map((u) => {
+      if (isPermanentAdmin(u.email) && u.role !== 'admin') {
+        u.role = 'admin'
+        User.updateOne({ _id: u._id }, { role: 'admin' }).catch(() => {})
+      }
+      return u
+    })
     res.json(users)
   } catch (error) {
     console.error('List users failed:', error)
@@ -110,6 +118,10 @@ router.patch('/:id/role', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
+    if (isPermanentAdmin(user.email)) {
+      return res.status(400).json({ error: 'Cannot change the role of the permanent admin' })
+    }
+
     await getAuth().setCustomUserClaims(user.uid, { role })
     user.role = role
     await user.save()
@@ -136,6 +148,10 @@ router.patch('/:id/warn', requireAdmin, async (req, res) => {
     const user = await User.findById(id)
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (isPermanentAdmin(user.email)) {
+      return res.status(400).json({ error: 'Cannot warn the permanent admin' })
     }
 
     user.isWarned = typeof isWarned === 'boolean' ? isWarned : !user.isWarned
@@ -206,6 +222,10 @@ router.delete('/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
+    if (isPermanentAdmin(user.email)) {
+      return res.status(400).json({ error: 'Cannot delete the permanent admin account' })
+    }
+
     await purgeUserCompletely(user)
 
     res.json({ message: 'User deleted successfully' })
@@ -229,6 +249,10 @@ router.patch('/:id/email', requireAdmin, async (req, res) => {
     const user = await User.findById(id)
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (isPermanentAdmin(user.email)) {
+      return res.status(400).json({ error: 'Cannot change the email of the permanent admin' })
     }
 
     const existing = await User.findOne({ email: cleanEmail, _id: { $ne: user._id } })
@@ -258,6 +282,83 @@ router.patch('/:id/email', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Update email failed:', error)
     res.status(500).json({ error: 'Unable to update user email' })
+  }
+})
+
+router.patch('/:id/position', requireAdmin, async (req, res) => {
+  const { id } = req.params
+  const { position } = req.body
+
+  if (typeof position !== 'string') {
+    return res.status(400).json({ error: 'Position must be a string' })
+  }
+
+  try {
+    const user = await User.findById(id)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    user.position = position.trim()
+    await user.save()
+    clearUserCache(user.uid)
+
+    res.json({
+      _id: user._id,
+      uid: user.uid,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      position: user.position,
+    })
+  } catch (error) {
+    console.error('Update position failed:', error)
+    res.status(500).json({ error: 'Unable to update position' })
+  }
+})
+
+const DEFAULT_POSITIONS = ['Intern', 'Superior Intern', 'Leader', 'Admin', 'CTO', 'COO', 'CEO']
+
+router.get('/position-options', requireEmployee, async (req, res) => {
+  try {
+    const config = await SystemConfig.findOne({ key: 'positionOptions' }).lean()
+    const options = config ? config.value : DEFAULT_POSITIONS
+    res.json(options)
+  } catch (error) {
+    console.error('Fetch position options failed:', error)
+    res.status(500).json({ error: 'Unable to fetch position options' })
+  }
+})
+
+router.post('/position-options', requireAdmin, async (req, res) => {
+  const { position } = req.body
+
+  if (!position || typeof position !== 'string' || !position.trim()) {
+    return res.status(400).json({ error: 'A valid position name is required' })
+  }
+
+  const trimmed = position.trim()
+
+  try {
+    let config = await SystemConfig.findOne({ key: 'positionOptions' })
+    if (!config) {
+      config = await SystemConfig.create({ key: 'positionOptions', value: [...DEFAULT_POSITIONS] })
+    }
+
+    const existing = Array.isArray(config.value) ? config.value : []
+    if (existing.map(v => v.toLowerCase()).includes(trimmed.toLowerCase())) {
+      return res.status(400).json({ error: 'This position already exists' })
+    }
+
+    existing.push(trimmed)
+    config.value = existing
+    config.markModified('value')
+    await config.save()
+
+    res.json(existing)
+  } catch (error) {
+    console.error('Add position option failed:', error)
+    res.status(500).json({ error: 'Unable to add position option' })
   }
 })
 

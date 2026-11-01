@@ -4,6 +4,7 @@ import { initializeApp, cert, getApps } from "firebase-admin/app";
 import fs from "fs";
 import app from "./app.js";
 import { startDeadlineCron } from "./cron/deadlines.js";
+import { ensurePermanentAdmin } from "./utils/userUtils.js";
 
 const {
   MONGODB_URI,
@@ -40,6 +41,7 @@ if (!getApps().length) {
 }
 
 await mongoose.connect(MONGODB_URI);
+await ensurePermanentAdmin();
 
 startDeadlineCron();
 

@@ -372,7 +372,7 @@ export default function DeadlinesCalendar() {
                   <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Assignees</label>
                   <p className="mt-1 text-[var(--text1)]">
                     {selectedTask.assignees && selectedTask.assignees.length > 0 
-                      ? selectedTask.assignees.map((a: any) => a.username ? `@${a.username}` : (a.name || a.email)).join(', ') 
+                      ? selectedTask.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
                       : 'Unassigned'}
                   </p>
                 </div>
@@ -406,7 +406,7 @@ export default function DeadlinesCalendar() {
                       <div key={comment._id} className="bg-[var(--bg)] p-3 rounded-xl border border-[var(--border)]">
                         <div className="flex justify-between items-center mb-1">
                           <strong className="text-sm font-semibold text-[var(--text1)]">
-                            {comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}
+                            {comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}{comment.author?.position ? ` [${comment.author.position}]` : ''}
                           </strong>
                           <span className="text-xs text-[var(--text2)]">
                             {new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

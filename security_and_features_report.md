@@ -25,7 +25,7 @@ flowchart TD
     RateLimiter --> GateCheck{Valid x-gate-token?}
     GateCheck -- No --> Blocked[403 Forbidden]
     GateCheck -- Yes --> AuthMiddleware[verifyFirebaseToken + Token Cache]
-    AuthMiddleware --> RBACCheck[RBAC Middleware: Admin / C-Grade / Employee]
+    AuthMiddleware --> RBACCheck[RBAC Middleware: Admin / Leader / Employee]
     RBACCheck --> BusinessLogic[Task / Event / Sprint API Logic]
 ```
 
@@ -126,7 +126,7 @@ sequenceDiagram
 | :--- | :--- |
 | **Kanban Task Board** | Dynamic column views (Todo, In Progress, Review, Completed), task priority tagging (Low, Medium, High, Urgent), link attachments, due date pickers, tags. |
 | **Personal Dashboard** | Customized task view showing tasks assigned directly to the logged-in user, filtered by status/priority. |
-| **Organization Dashboard** | Organization-wide board for Admin/C-Grade; employee results are always scoped to the employee and their reporting hierarchy by the backend. |
+| **Organization Dashboard** | Organization-wide board for Admin/Leader; employee results are always scoped to the employee and their reporting hierarchy by the backend. |
 | **Sprint Management & Planning Hub** | Create sprints, activate active sprint, close completed sprints, view sprint velocity, assign tasks to sprints. |
 | **Chain of Command (COC) Tree** | Interactive organizational chart visualizer showing direct and nested subordinate relationships. |
 | **Deadlines & Interactive Calendar** | Monthly/weekly calendar view of task due dates and scheduling events. |
@@ -141,18 +141,18 @@ sequenceDiagram
 
 ## 4. Role-Based Access Control (RBAC) Permissions Matrix
 
-The platform defines three primary roles: **Admin**, **C-Grade (Executive Management)**, and **Employee (Standard User)**.
+The platform defines three primary roles: **Admin**, **Leader (Executive Management)**, and **Employee (Standard User)**.
 
 ```mermaid
 graph TD
     Admin[Admin Role] -->|Full Control| System[System, Security Gate, Users, Tasks, Sprints]
-    CGrade[C-Grade Role] -->|Executive Access| Exec[Org Tasks, Sprints, Events, Reports]
+    Leader[Leader Role] -->|Executive Access| Exec[Org Tasks, Sprints, Events, Reports]
     Employee[Employee Role] -->|Standard Access| Std[Personal Tasks, Supervised Subordinate Tasks, Comments]
 ```
 
 ### Complete RBAC Matrix ("Which Kind of User Can Do What")
 
-| Capability / Action | Unauthenticated / Guest | Employee (Standard) | C-Grade (Executive) | Admin |
+| Capability / Action | Unauthenticated / Guest | Employee (Standard) | Leader (Executive) | Admin |
 | :--- | :---: | :---: | :---: | :---: |
 | **View Public Security Gate Question** | `ALLOWED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |
 | **Submit Security Gate Challenge** | `ALLOWED` | `ALLOWED` | `ALLOWED` | `ALLOWED` |

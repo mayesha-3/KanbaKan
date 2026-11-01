@@ -72,6 +72,7 @@ type UserProfile = {
   role?: string
   department?: string
   isWarned?: boolean
+  position?: string
 }
 
 function App() {
@@ -309,8 +310,13 @@ function App() {
           </nav>
           <div className="flex items-center gap-2 sm:gap-6">
             <div className="hidden flex-col items-end sm:flex">
-              <span className="font-semibold text-[var(--text1)]">
+              <span className="font-semibold text-[var(--text1)] flex items-center gap-1.5">
                 {profile.name || profile.email}
+                {profile.position && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--accent)]/15 text-[var(--accent)] font-bold border border-[var(--accent)]/25">
+                    {profile.position}
+                  </span>
+                )}
               </span>
               <span className="text-xs text-[var(--text2)] capitalize">
                 {profile.role}

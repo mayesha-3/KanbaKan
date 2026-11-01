@@ -11,7 +11,7 @@ const router = express.Router()
 const canModifyTask = async (requester, task) => {
   const role = requester.role
   if (!role) return false
-  if (role === 'admin' || role === 'cgrade') return true
+  if (role === 'admin' || role === 'Leader') return true
   if (role === 'employee') {
     if (task.createdBy.toString() === requester._id.toString()) return true
     if (task.assignees && task.assignees.some(a => a.toString() === requester._id.toString())) return true

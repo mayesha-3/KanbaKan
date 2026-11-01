@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { auth } from '../firebase'
 import { BACKEND_URL } from '../config'
 import { apiFetch } from '../api'
-import { AlertTriangle, Trash2, Shield, UserCheck, Search, CheckCircle, ShieldAlert, Edit3, Mail } from 'lucide-react'
+import { AlertTriangle, Trash2, Shield, UserCheck, Search, CheckCircle, ShieldAlert, Edit3, Mail, Briefcase } from 'lucide-react'
 
 type UserItem = {
   _id: string
@@ -14,6 +14,7 @@ type UserItem = {
   username?: string
   role: string
   department?: string
+  position?: string
   isWarned?: boolean
   superior?: {
     _id: string
@@ -119,6 +120,52 @@ const deleteUser = async (id: string) => {
   return res.json()
 }
 
+const updatePosition = async ({ id, position }: { id: string; position: string }) => {
+  const token = await auth.currentUser?.getIdToken()
+  const res = await apiFetch(`${BACKEND_URL}/api/users/${id}/position`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ position }),
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Failed to update position')
+  }
+  return res.json()
+}
+
+const fetchPositionOptions = async (): Promise<string[]> => {
+  const token = await auth.currentUser?.getIdToken()
+  const res = await apiFetch(`${BACKEND_URL}/api/users/position-options`, {
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error('Failed to fetch position options')
+  return res.json()
+}
+
+const addPositionOption = async (position: string): Promise<string[]> => {
+  const token = await auth.currentUser?.getIdToken()
+  const res = await apiFetch(`${BACKEND_URL}/api/users/position-options`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ position }),
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Failed to add position option')
+  }
+  return res.json()
+}
+
 export default function AdminDashboard() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -127,16 +174,24 @@ export default function AdminDashboard() {
   const [editingEmailUser, setEditingEmailUser] = useState<UserItem | null>(null)
   const [newEmailInput, setNewEmailInput] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const [addingPositionModal, setAddingPositionModal] = useState(false)
+  const [newPositionInput, setNewPositionInput] = useState('')
 
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['adminUsers'],
     queryFn: fetchUsers,
   })
 
+  const { data: positionOptions = [] } = useQuery({
+    queryKey: ['positionOptions'],
+    queryFn: fetchPositionOptions,
+  })
+
   const invalidateAllUserQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['adminUsers'] })
     queryClient.invalidateQueries({ queryKey: ['users'] })
     queryClient.invalidateQueries({ queryKey: ['profile'] })
+    queryClient.invalidateQueries({ queryKey: ['positionOptions'] })
   }
 
   const warnMutation = useMutation({
@@ -187,6 +242,28 @@ export default function AdminDashboard() {
       invalidateAllUserQueries()
       setDeletingUser(null)
       setSuccessMsg('User account permanently deleted')
+      setTimeout(() => setSuccessMsg(''), 4000)
+    },
+    onError: (err: Error) => alert(err.message),
+  })
+
+  const positionMutation = useMutation({
+    mutationFn: updatePosition,
+    onSuccess: () => {
+      invalidateAllUserQueries()
+      setSuccessMsg('User position updated successfully')
+      setTimeout(() => setSuccessMsg(''), 4000)
+    },
+    onError: (err: Error) => alert(err.message),
+  })
+
+  const addPositionMutation = useMutation({
+    mutationFn: addPositionOption,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['positionOptions'] })
+      setAddingPositionModal(false)
+      setNewPositionInput('')
+      setSuccessMsg('New position option added successfully')
       setTimeout(() => setSuccessMsg(''), 4000)
     },
     onError: (err: Error) => alert(err.message),
@@ -263,6 +340,7 @@ export default function AdminDashboard() {
               <tr className="bg-[var(--bg)] border-b border-[var(--border)] text-xs font-bold uppercase tracking-wider text-[var(--text2)]">
                 <th className="p-4">User</th>
                 <th className="p-4">Username</th>
+                <th className="p-4">Position</th>
                 <th className="p-4">Role</th>
                 <th className="p-4">Immediate Superior</th>
                 <th className="p-4">Status / Warning</th>
@@ -272,12 +350,13 @@ export default function AdminDashboard() {
             <tbody className="divide-y divide-[var(--border)] text-sm text-[var(--text1)]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-[var(--text2)] italic">
+                  <td colSpan={7} className="p-8 text-center text-[var(--text2)] italic">
                     No users match your search criteria.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => {
+                  const isPermanentAdmin = u.email?.toLowerCase() === 'coo.kishorcoder@gmail.com'
                   const currentSuperiorId =
                     typeof u.superior === 'object' && u.superior ? u.superior._id : typeof u.superior === 'string' ? u.superior : ''
 
@@ -293,6 +372,11 @@ export default function AdminDashboard() {
                               Internal Placeholder
                             </span>
                           )}
+                          {isPermanentAdmin && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 font-semibold border border-purple-500/30 flex items-center gap-1" title="Permanent System Administrator">
+                              <Shield size={10} /> Permanent Admin
+                            </span>
+                          )}
                         </div>
                         {u.department && (
                           <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--text2)] uppercase font-semibold">
@@ -306,16 +390,40 @@ export default function AdminDashboard() {
                         {u.username ? `@${u.username}` : <em className="text-[var(--text2)]">Not set</em>}
                       </td>
 
+                      {/* Position Selector */}
+                      <td className="p-4">
+                        <select
+                          value={u.position || ''}
+                          onChange={(e) => {
+                            if (e.target.value === '__add_new__') {
+                              setAddingPositionModal(true)
+                              e.target.value = u.position || ''
+                            } else {
+                              positionMutation.mutate({ id: u._id, position: e.target.value })
+                            }
+                          }}
+                          disabled={positionMutation.isPending}
+                          className="bg-[var(--bg)] border border-[var(--border)] text-[var(--text1)] rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-[var(--accent)]"
+                        >
+                          <option value="">No Position</option>
+                          {positionOptions.map((pos) => (
+                            <option key={pos} value={pos}>{pos}</option>
+                          ))}
+                          <option value="__add_new__">＋ Add New...</option>
+                        </select>
+                      </td>
+
                       {/* Role Selector */}
                       <td className="p-4">
                         <select
-                          value={u.role || 'employee'}
+                          value={isPermanentAdmin ? 'admin' : (u.role || 'employee')}
                           onChange={(e) => roleMutation.mutate({ id: u._id, role: e.target.value })}
-                          disabled={roleMutation.isPending}
-                          className="bg-[var(--bg)] border border-[var(--border)] text-[var(--text1)] rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-[var(--accent)]"
+                          disabled={roleMutation.isPending || isPermanentAdmin}
+                          title={isPermanentAdmin ? 'Permanent Admin role cannot be modified' : undefined}
+                          className={`bg-[var(--bg)] border border-[var(--border)] text-[var(--text1)] rounded-lg px-3 py-1.5 text-xs font-semibold outline-none focus:border-[var(--accent)] ${isPermanentAdmin ? 'opacity-80 cursor-not-allowed bg-purple-500/5' : ''}`}
                         >
                           <option value="employee">Employee</option>
-                          <option value="cgrade">C-Grade Leader</option>
+                          <option value="Leader">Leader</option>
                           <option value="admin">Admin</option>
                         </select>
                       </td>
@@ -333,7 +441,7 @@ export default function AdminDashboard() {
                             .filter((supCandidate) => supCandidate._id !== u._id)
                             .map((supCandidate) => (
                               <option key={supCandidate._id} value={supCandidate._id}>
-                                {supCandidate.name || supCandidate.email} ({supCandidate.role})
+                                {supCandidate.name || supCandidate.email}{supCandidate.position ? ` [${supCandidate.position}]` : ''} ({supCandidate.role})
                               </option>
                             ))}
                         </select>
@@ -341,7 +449,11 @@ export default function AdminDashboard() {
 
                       {/* Warning Status */}
                       <td className="p-4">
-                        {u.isWarned ? (
+                        {isPermanentAdmin ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-300 font-semibold text-xs border border-purple-500/30">
+                            <Shield size={14} /> Permanent Admin
+                          </span>
+                        ) : u.isWarned ? (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 text-red-500 font-bold text-xs border border-red-500/30">
                             <AlertTriangle size={14} /> Under Watch
                           </span>
@@ -354,43 +466,47 @@ export default function AdminDashboard() {
 
                       {/* Action Buttons */}
                       <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingEmailUser(u)
-                              setNewEmailInput(u.email.endsWith('@kanbankc.internal') ? '' : u.email)
-                            }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] hover:border-[var(--accent)] text-xs font-semibold transition-all duration-200 cursor-pointer"
-                            title="Edit User Email"
-                          >
-                            <Edit3 size={14} /> Edit Email
-                          </button>
+                        {isPermanentAdmin ? (
+                          <span className="text-xs text-[var(--text2)] font-semibold italic pr-2">Protected</span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingEmailUser(u)
+                                setNewEmailInput(u.email.endsWith('@kanbankc.internal') ? '' : u.email)
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[var(--bg)] text-[var(--text1)] border border-[var(--border)] hover:border-[var(--accent)] text-xs font-semibold transition-all duration-200 cursor-pointer"
+                              title="Edit User Email"
+                            >
+                              <Edit3 size={14} /> Edit Email
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => warnMutation.mutate({ id: u._id, isWarned: !u.isWarned })}
-                            disabled={warnMutation.isPending}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs transition-all duration-200 cursor-pointer ${
-                              u.isWarned
-                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25'
-                                : 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20'
-                            }`}
-                            title={u.isWarned ? 'Lift warning' : 'Warn user'}
-                          >
-                            <AlertTriangle size={14} />
-                            {u.isWarned ? 'Unwarn' : 'Warn User'}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => warnMutation.mutate({ id: u._id, isWarned: !u.isWarned })}
+                              disabled={warnMutation.isPending}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs transition-all duration-200 cursor-pointer ${
+                                u.isWarned
+                                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25'
+                                  : 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20'
+                              }`}
+                              title={u.isWarned ? 'Lift warning' : 'Warn user'}
+                            >
+                              <AlertTriangle size={14} />
+                              {u.isWarned ? 'Unwarn' : 'Warn User'}
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setDeletingUser(u)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25 text-xs font-semibold transition-all duration-200 cursor-pointer"
-                            title="Delete User Account"
-                          >
-                            <Trash2 size={14} /> Remove
-                          </button>
-                        </div>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingUser(u)}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25 text-xs font-semibold transition-all duration-200 cursor-pointer"
+                              title="Delete User Account"
+                            >
+                              <Trash2 size={14} /> Remove
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )
@@ -497,6 +613,66 @@ export default function AdminDashboard() {
                 {deleteMutation.isPending ? 'Deleting...' : 'Delete Account'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Position Modal */}
+      {addingPositionModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-2xl w-full max-w-md space-y-4">
+            <div className="flex items-center gap-3 text-[var(--accent)]">
+              <div className="p-3 rounded-full bg-[var(--accent)]/15">
+                <Briefcase size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-[var(--text1)]">Add New Position</h3>
+            </div>
+            <p className="text-sm text-[var(--text2)] leading-relaxed">
+              Create a new position option that will be available for all users.
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (newPositionInput.trim()) {
+                  addPositionMutation.mutate(newPositionInput.trim())
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text2)] uppercase mb-1">
+                  Position Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vice President"
+                  value={newPositionInput}
+                  onChange={(e) => setNewPositionInput(e.target.value)}
+                  className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text1)] outline-none focus:border-[var(--accent)]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingPositionModal(false)
+                    setNewPositionInput('')
+                  }}
+                  className="px-4 py-2 text-[var(--text1)] hover:bg-[var(--bg)] rounded-xl border border-[var(--border)] text-sm font-semibold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addPositionMutation.isPending || !newPositionInput.trim()}
+                  className="px-5 py-2 bg-[var(--accent)] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {addPositionMutation.isPending ? 'Adding...' : 'Add Position'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
