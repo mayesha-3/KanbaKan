@@ -139,7 +139,7 @@ router.post('/verify', async (req, res) => {
         failedAttempts: clearedAttempts,
       })
 
-      const gateToken = createGateToken(600)
+      const gateToken = createGateToken(14 * 24 * 60 * 60)
       return res.json({
         success: true,
         gateToken,

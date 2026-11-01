@@ -105,7 +105,7 @@ router.get('/personal', requireEmployee, async (req, res) => {
 
 router.post('/', requireEmployee, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, assigneeIds, sprintId, tags, link } = req.body
+    const { title, description, priority, dueDate, assigneeIds, sprintId, sprint, tags, link } = req.body
     const user = await User.findOne({ uid: req.user.uid })
     if (!user) return res.status(404).json({ error: 'User not found' })
 
@@ -116,6 +116,8 @@ router.post('/', requireEmployee, async (req, res) => {
       assignees = validUsers.map(u => u._id)
     }
 
+    const parsedSprint = sprint !== undefined && sprint !== null && sprint !== '' && !isNaN(Number(sprint)) ? Number(sprint) : undefined
+
     const task = await Task.create({
       title,
       description,
@@ -123,6 +125,7 @@ router.post('/', requireEmployee, async (req, res) => {
       assignees,
       createdBy: user._id,
       sprintId: sprintId ? new mongoose.Types.ObjectId(sprintId) : undefined,
+      sprint: parsedSprint,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       tags,
       link: link || '',
@@ -149,7 +152,7 @@ router.post('/', requireEmployee, async (req, res) => {
 
 router.patch('/:id', requireEmployee, async (req, res) => {
   const { id } = req.params
-  const { title, description, priority, dueDate, assigneeIds, tags, updatedAt, link } = req.body
+  const { title, description, priority, dueDate, assigneeIds, sprint, tags, updatedAt, link } = req.body
   if (!updatedAt) return res.status(400).json({ error: 'updatedAt is required' })
 
   const requester = await User.findOne({ uid: req.user.uid })
@@ -169,18 +172,25 @@ router.patch('/:id', requireEmployee, async (req, res) => {
     assignees = validUsers.map(u => u._id)
   }
 
+  const parsedSprint = sprint !== undefined ? (sprint !== null && sprint !== '' && !isNaN(Number(sprint)) ? Number(sprint) : null) : undefined
+
+  const updateFields = {
+    title,
+    description,
+    priority,
+    assignees,
+    dueDate: dueDate ? new Date(dueDate) : undefined,
+    tags,
+    link: link !== undefined ? link : undefined,
+    updatedAt: new Date(),
+  }
+  if (parsedSprint !== undefined) {
+    updateFields.sprint = parsedSprint
+  }
+
   const updated = await Task.findOneAndUpdate(
     { _id: id, updatedAt: new Date(updatedAt), isDeleted: false },
-    {
-      title,
-      description,
-      priority,
-      assignees,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      tags,
-      link: link !== undefined ? link : undefined,
-      updatedAt: new Date(),
-    },
+    updateFields,
     { new: true },
   )
 

@@ -5,7 +5,7 @@ export const apiFetch = async (
   init: RequestInit = {},
 ): Promise<Response> => {
   const headers = new Headers(init.headers)
-  const gateToken = sessionStorage.getItem('gateToken')
+  const gateToken = localStorage.getItem('gateToken') || sessionStorage.getItem('gateToken')
   if (gateToken) {
     headers.set('x-gate-token', gateToken)
   }
@@ -17,6 +17,8 @@ export const apiFetch = async (
       typeof data?.error === 'string' &&
       data.error.startsWith('Security gate verification token')
     ) {
+      localStorage.removeItem('gateToken')
+      localStorage.removeItem('securityGatePassed')
       sessionStorage.removeItem('gateToken')
       sessionStorage.removeItem('securityGatePassed')
       window.dispatchEvent(new Event(SECURITY_GATE_EXPIRED_EVENT))

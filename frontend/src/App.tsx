@@ -86,7 +86,9 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [securityGatePassed, setSecurityGatePassed] = useState<boolean>(
-    () => sessionStorage.getItem('securityGatePassed') === 'true'
+    () =>
+      localStorage.getItem('securityGatePassed') === 'true' ||
+      sessionStorage.getItem('securityGatePassed') === 'true'
   )
   const navigate = useNavigate()
   const location = useLocation()
@@ -97,10 +99,12 @@ function App() {
 
   useEffect(() => {
     const handleGateExpired = () => {
-      setSecurityGatePassed(false)
-      setProfile(null)
-      setUser(null)
-      void signOut(auth)
+      // Authenticated users with active sessions should never be booted or interrupted by the security gate challenge
+      if (!auth.currentUser) {
+        setSecurityGatePassed(false)
+        setProfile(null)
+        setUser(null)
+      }
     }
 
     window.addEventListener(SECURITY_GATE_EXPIRED_EVENT, handleGateExpired)

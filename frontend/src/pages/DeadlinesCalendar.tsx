@@ -207,29 +207,28 @@ export default function DeadlinesCalendar() {
     <div className="flex flex-col h-full min-h-0 gap-6 p-6">
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-[var(--text1)]">Deadlines Calendar</h2>
+        <h2 className="text-2xl font-bold text-[var(--text1)]">
+          Deadlines Calendar
+        </h2>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
-            onClick={goToPrev} 
-            title="Previous month"
-          >
+            onClick={goToPrev}
+            title="Previous month">
             <ChevronLeft size={18} />
           </button>
           <span className="text-xl font-bold text-[var(--text1)] min-w-[220px] text-center">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
-          <button 
+          <button
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text2)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
-            onClick={goToNext} 
-            title="Next month"
-          >
+            onClick={goToNext}
+            title="Next month">
             <ChevronRight size={18} />
           </button>
-          <button 
+          <button
             className="px-4 py-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30 font-semibold hover:bg-[var(--accent)]/20 transition-all"
-            onClick={goToToday}
-          >
+            onClick={goToToday}>
             Today
           </button>
         </div>
@@ -238,35 +237,37 @@ export default function DeadlinesCalendar() {
       {/* ── Calendar Grid ── */}
       <div className="flex-1 flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden min-h-[400px]">
         <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface)]">
-          {DAYS_OF_WEEK.map(d => (
-            <div key={d} className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider text-[var(--text2)]">
+          {DAYS_OF_WEEK.map((d) => (
+            <div
+              key={d}
+              className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider text-[var(--text2)]">
               {d}
             </div>
           ))}
         </div>
         <div className="flex-1 grid grid-cols-7 auto-rows-[minmax(100px,1fr)] bg-[var(--surface)]">
           {calendarCells.map((cell, idx) => {
-            const key = getDateKey(cell)
-            const dayTasks = tasksByDate.get(key) || []
-            const visible = dayTasks.slice(0, MAX_CHIPS_PER_DAY)
-            const overflow = dayTasks.length - MAX_CHIPS_PER_DAY
-            
-            const isOutside = cell.outside
-            const isCurrentToday = isToday(cell)
+            const key = getDateKey(cell);
+            const dayTasks = tasksByDate.get(key) || [];
+            const visible = dayTasks.slice(0, MAX_CHIPS_PER_DAY);
+            const overflow = dayTasks.length - MAX_CHIPS_PER_DAY;
+
+            const isOutside = cell.outside;
+            const isCurrentToday = isToday(cell);
 
             return (
               <div
                 key={idx}
                 className={`
                   relative border-r border-b border-[var(--border)]/30 p-2 flex flex-col transition-colors hover:bg-[var(--text2)]/5
-                  ${isOutside ? 'opacity-30 pointer-events-none' : ''}
-                  ${isCurrentToday ? 'bg-[var(--accent)]/5 ring-1 ring-inset ring-[var(--accent)]/20' : ''}
-                `}
-              >
-                <span className={`text-sm font-semibold mb-2 ${isCurrentToday ? 'text-[var(--accent)]' : 'text-[var(--text1)]'}`}>
+                  ${isOutside ? "opacity-30 pointer-events-none" : ""}
+                  ${isCurrentToday ? "bg-[var(--accent)]/5 ring-1 ring-inset ring-[var(--accent)]/20" : ""}
+                `}>
+                <span
+                  className={`text-sm font-semibold mb-2 ${isCurrentToday ? "text-[var(--accent)]" : "text-[var(--text1)]"}`}>
                   {cell.day}
                 </span>
-                
+
                 <div className="flex flex-col gap-1 overflow-y-auto pr-1">
                   {visible.map((task: any) => (
                     <div
@@ -275,10 +276,12 @@ export default function DeadlinesCalendar() {
                         flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium cursor-pointer border-l-2 transition-all hover:translate-x-0.5 truncate
                         ${getChipClass(task)}
                       `}
-                      onClick={() => { setSelectedTask(task); setCommentText('') }}
-                      title={`${task.title} — ${task.priority}`}
-                    >
-                      {task.status === 'completed' ? (
+                      onClick={() => {
+                        setSelectedTask(task);
+                        setCommentText("");
+                      }}
+                      title={`${task.title} — ${task.priority}`}>
+                      {task.status === "completed" ? (
                         <CheckCircle2 size={12} className="flex-shrink-0" />
                       ) : (
                         <Circle size={12} className="flex-shrink-0" />
@@ -293,7 +296,7 @@ export default function DeadlinesCalendar() {
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       </div>
@@ -302,92 +305,150 @@ export default function DeadlinesCalendar() {
       {upcomingTasks.length > 0 && (
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
           {upcomingTasks.map((task: any) => {
-            const dl = getDaysLeftInfo(task.dueDate)
+            const dl = getDaysLeftInfo(task.dueDate);
             return (
               <div
                 key={task._id}
                 className="flex-none w-[220px] p-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl cursor-pointer hover:-translate-y-0.5 hover:border-[var(--accent)] transition-all flex flex-col gap-2"
-                onClick={() => { setSelectedTask(task); setCommentText('') }}
-              >
-                <h4 className="text-[var(--text1)] font-semibold truncate" title={task.title}>{task.title}</h4>
+                onClick={() => {
+                  setSelectedTask(task);
+                  setCommentText("");
+                }}>
+                <div className="flex items-center justify-between gap-1">
+                  <h4
+                    className="text-[var(--text1)] font-semibold truncate flex-1"
+                    title={task.title}>
+                    {task.title}
+                  </h4>
+                  {task.sprint !== undefined &&
+                    task.sprint !== null &&
+                    task.sprint !== "" && (
+                      <span className=" shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30">
+                        Sprint: {task.sprint}
+                      </span>
+                    )}
+                </div>
                 <div className="flex items-center justify-between text-xs mt-auto">
-                  <span className={`px-2 py-0.5 rounded-md font-medium uppercase tracking-wider text-[10px] ${getPriorityBadgeClass(task.priority)}`}>
-                    {task.priority || 'Medium'}
+                  <span
+                    className={`px-2 py-0.5 rounded-md font-medium uppercase tracking-wider text-[10px] ${getPriorityBadgeClass(task.priority)}`}>
+                    {task.priority || "Medium"}
                   </span>
                   <span className={dl.cls}>{dl.text}</span>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
 
       {/* ── Task Details + Comments Modal ── */}
       {selectedTask && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" 
-          onClick={() => setSelectedTask(null)}
-        >
-          <div 
-            className="bg-[var(--surface)] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)]" 
-            onClick={e => e.stopPropagation()}
-          >
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setSelectedTask(null)}>
+          <div
+            className="bg-[var(--surface)] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)]"
+            onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
-              <h3 className="text-xl font-bold text-[var(--text1)]">Task Details</h3>
-              <button 
+              <h3 className="text-xl font-bold text-[var(--text1)]">
+                Task Details
+              </h3>
+              <button
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text2)] hover:bg-[var(--text2)]/10 hover:text-[var(--text1)] transition-colors"
-                onClick={() => setSelectedTask(null)}
-              >
+                onClick={() => setSelectedTask(null)}>
                 &times;
               </button>
             </div>
-            
+
             {/* Content Body */}
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-              
               {/* Task Details Info */}
               <div className="flex-1 overflow-y-auto p-6 border-b md:border-b-0 md:border-r border-[var(--border)] space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Title</label>
-                  <p className="text-[var(--text1)] font-medium text-lg mt-1">{selectedTask.title}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                      Title
+                    </label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-[var(--text1)] font-medium text-lg">
+                        {selectedTask.title}
+                      </p>
+                    </div>
+                    <div>
+                      {selectedTask.sprint !== undefined &&
+                        selectedTask.sprint !== null &&
+                        selectedTask.sprint !== "" && (
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30">
+                            Sprint: {selectedTask.sprint}
+                          </span>
+                        )}
+                    </div>
+                  </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Priority</label>
+                    <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                      Priority
+                    </label>
                     <div className="mt-1">
-                      <span className={`inline-block px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${getPriorityBadgeClass(selectedTask.priority)}`}>
-                        {selectedTask.priority || 'Medium'}
+                      <span
+                        className={`inline-block px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${getPriorityBadgeClass(selectedTask.priority)}`}>
+                        {selectedTask.priority || "Medium"}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Status</label>
-                    <p className="mt-1 text-[var(--text1)] capitalize font-medium">{selectedTask.status?.replace('_', ' ')}</p>
+                    <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                      Status
+                    </label>
+                    <p className="mt-1 text-[var(--text1)] capitalize font-medium">
+                      {selectedTask.status?.replace("_", " ")}
+                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Assignees</label>
+                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                    Assignees
+                  </label>
                   <p className="mt-1 text-[var(--text1)]">
-                    {selectedTask.assignees && selectedTask.assignees.length > 0 
-                      ? selectedTask.assignees.map((a: any) => (a.username ? `@${a.username}` : (a.name || a.email)) + (a.position ? ` [${a.position}]` : '')).join(', ') 
-                      : 'Unassigned'}
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Deadline</label>
-                  <p className="mt-1 text-[var(--text1)]">
-                    {selectedTask.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'None'}
+                    {selectedTask.assignees && selectedTask.assignees.length > 0
+                      ? selectedTask.assignees
+                          .map(
+                            (a: any) =>
+                              (a.username
+                                ? `@${a.username}`
+                                : a.name || a.email) +
+                              (a.position ? ` [${a.position}]` : ""),
+                          )
+                          .join(", ")
+                      : "Unassigned"}
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">Description</label>
+                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                    Deadline
+                  </label>
+                  <p className="mt-1 text-[var(--text1)]">
+                    {selectedTask.dueDate
+                      ? new Date(selectedTask.dueDate).toLocaleDateString()
+                      : "None"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--text2)] uppercase tracking-wider">
+                    Description
+                  </label>
                   <div className="mt-1 p-3 bg-[var(--bg)] rounded-lg text-sm text-[var(--text1)] whitespace-pre-wrap border border-[var(--border)]">
-                    {selectedTask.description || <em className="text-[var(--text2)]">No details provided.</em>}
+                    {selectedTask.description || (
+                      <em className="text-[var(--text2)]">
+                        No details provided.
+                      </em>
+                    )}
                   </div>
                 </div>
               </div>
@@ -395,50 +456,67 @@ export default function DeadlinesCalendar() {
               {/* Comments Section */}
               <div className="flex-1 flex flex-col w-full md:w-80 lg:w-96 bg-[var(--surface)]">
                 <div className="p-4 border-b border-[var(--border)] bg-[var(--bg)]/50">
-                  <h4 className="font-semibold text-[var(--text1)]">Comments</h4>
+                  <h4 className="font-semibold text-[var(--text1)]">
+                    Comments
+                  </h4>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {comments.length === 0 ? (
-                    <p className="text-sm text-[var(--text2)] italic text-center mt-4">No comments yet.</p>
+                    <p className="text-sm text-[var(--text2)] italic text-center mt-4">
+                      No comments yet.
+                    </p>
                   ) : (
                     comments.map((comment: any) => (
-                      <div key={comment._id} className="bg-[var(--bg)] p-3 rounded-xl border border-[var(--border)]">
+                      <div
+                        key={comment._id}
+                        className="bg-[var(--bg)] p-3 rounded-xl border border-[var(--border)]">
                         <div className="flex justify-between items-center mb-1">
                           <strong className="text-sm font-semibold text-[var(--text1)]">
-                            {comment.author?.username ? `@${comment.author.username}` : (comment.author?.name || comment.author?.email)}{comment.author?.position ? ` [${comment.author.position}]` : ''}
+                            {comment.author?.username
+                              ? `@${comment.author.username}`
+                              : comment.author?.name || comment.author?.email}
+                            {comment.author?.position
+                              ? ` [${comment.author.position}]`
+                              : ""}
                           </strong>
                           <span className="text-xs text-[var(--text2)]">
-                            {new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(comment.timestamp).toLocaleTimeString(
+                              [],
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}
                           </span>
                         </div>
-                        <p className="text-sm text-[var(--text1)] whitespace-pre-wrap">{comment.content}</p>
+                        <p className="text-sm text-[var(--text1)] whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
                       </div>
                     ))
                   )}
                 </div>
 
-                <form 
+                <form
                   className="p-4 border-t border-[var(--border)] flex gap-2 bg-[var(--surface)]"
                   onSubmit={(e) => {
-                    e.preventDefault()
-                    if (!commentText.trim()) return
-                    commentMutation.mutate({ taskId: selectedTask._id, content: commentText })
-                  }}
-                >
-                  <input 
-                    type="text" 
-                    value={commentText} 
-                    onChange={e => setCommentText(e.target.value)} 
-                    placeholder="Type a comment..." 
+                    e.preventDefault();
+                    if (!commentText.trim()) return;
+                    commentMutation.mutate({
+                      taskId: selectedTask._id,
+                      content: commentText,
+                    });
+                  }}>
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Type a comment..."
                     disabled={commentMutation.isPending}
                     className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-sm text-[var(--text1)] focus:outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--text2)] disabled:opacity-50"
                   />
-                  <button 
-                    type="submit" 
-                    disabled={commentMutation.isPending || !commentText.trim()} 
-                    className="w-10 h-10 flex items-center justify-center bg-[var(--accent)] text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-                  >
+                  <button
+                    type="submit"
+                    disabled={commentMutation.isPending || !commentText.trim()}
+                    className="w-10 h-10 flex items-center justify-center bg-[var(--accent)] text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
                     <Send size={16} />
                   </button>
                 </form>
@@ -448,5 +526,5 @@ export default function DeadlinesCalendar() {
         </div>
       )}
     </div>
-  )
+  );
 }

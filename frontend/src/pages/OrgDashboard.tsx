@@ -197,6 +197,7 @@ export default function OrgDashboard() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const assigneeIds = fd.getAll('assigneeIds').filter(id => id.toString().trim() !== '')
+    const sprintVal = fd.get('sprint')
     editMutation.mutate({
       id: editingTask._id,
       taskData: {
@@ -205,6 +206,7 @@ export default function OrgDashboard() {
         priority: fd.get('priority'),
         assigneeIds,
         dueDate: fd.get('dueDate') || undefined,
+        sprint: sprintVal ? Number(sprintVal) : null,
         link: fd.get('link') || '',
         updatedAt: editingTask.updatedAt
       }
@@ -326,7 +328,14 @@ export default function OrgDashboard() {
                         className={`bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3 ${stale ? 'border-red-500/50 bg-red-50/50 dark:bg-red-900/10' : ''}`}
                         onClick={() => setSelectedTask(task)}
                       >
-                        <h4 className="font-medium text-[var(--text1)]">{task.title}</h4>
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-medium text-[var(--text1)] flex-1">{task.title}</h4>
+                          {task.sprint !== undefined && task.sprint !== null && task.sprint !== '' && (
+                            <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30">
+                              Sprint: {task.sprint}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(task.priority)}`}>
                             {task.priority}
@@ -429,9 +438,15 @@ export default function OrgDashboard() {
                   <option value="urgent">Urgent</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text2)] mb-1">Deadline</label>
-                <input type="date" name="dueDate" defaultValue={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''} className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text2)] mb-1">Deadline</label>
+                  <input type="date" name="dueDate" defaultValue={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''} className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text2)] mb-1">Sprint (Optional)</label>
+                  <input type="number" min="1" step="1" name="sprint" defaultValue={editingTask.sprint || ''} placeholder="e.g. 2" className="w-full border border-[var(--border)] rounded-xl bg-[var(--bg)] text-[var(--text1)] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--text2)] mb-1">Link (URL)</label>
@@ -484,7 +499,10 @@ export default function OrgDashboard() {
                     <a href={selectedTask.link} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline break-all print-link">{selectedTask.link}</a>
                   </div>
                 )}
-                <div className="flex gap-6 text-sm">
+                <div className="flex flex-wrap gap-6 text-sm">
+                  {selectedTask.sprint !== undefined && selectedTask.sprint !== null && selectedTask.sprint !== '' && (
+                    <p className="text-[var(--text1)]"><strong className="text-[var(--text2)]">Sprint:</strong> {selectedTask.sprint}</p>
+                  )}
                   <p className="text-[var(--text1)]"><strong className="text-[var(--text2)]">Deadline:</strong> {selectedTask.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'None'}</p>
                   <p className="text-[var(--text1)]"><strong className="text-[var(--text2)]">Date Assigned:</strong> {selectedTask.createdAt ? new Date(selectedTask.createdAt).toLocaleDateString() : 'Unknown'}</p>
                 </div>

@@ -10,6 +10,7 @@ const taskSchema = new mongoose.Schema(
     assignees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     sprintId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sprint', index: true },
+    sprint: { type: Number, default: null },
     dueDate: { type: Date, index: true },
     completedAt: { type: Date },
     lastDeadlineReminderSentAt: { type: Date, default: null },

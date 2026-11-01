@@ -71,8 +71,8 @@ const base64UrlDecode = (str) => {
   return Buffer.from(base64, 'base64').toString('utf8')
 }
 
-// Issue 10-minute gate token JWT
-export const createGateToken = (expiresInSeconds = 600) => {
+// Issue gate token JWT (default 14 days, at least 10 days)
+export const createGateToken = (expiresInSeconds = 14 * 24 * 60 * 60) => {
   const header = JSON.stringify({ alg: 'HS256', typ: 'JWT' })
   const now = Math.floor(Date.now() / 1000)
   const payload = JSON.stringify({

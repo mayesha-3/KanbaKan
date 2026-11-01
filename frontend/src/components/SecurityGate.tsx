@@ -96,6 +96,8 @@ export default function SecurityGate({ onPassed }: SecurityGateProps) {
 
       const data = await res.json()
       if (data.success && data.gateToken) {
+        localStorage.setItem('securityGatePassed', 'true')
+        localStorage.setItem('gateToken', data.gateToken)
         sessionStorage.setItem('securityGatePassed', 'true')
         sessionStorage.setItem('gateToken', data.gateToken)
         onPassed(data.gateToken)

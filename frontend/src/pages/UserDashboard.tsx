@@ -252,12 +252,14 @@ export default function UserDashboard() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const assigneeIds = fd.getAll('assigneeIds').filter(id => id.toString().trim() !== '')
+    const sprintVal = fd.get('sprint')
     createMutation.mutate({
       title: fd.get('title'),
       description: fd.get('description') || '',
       priority: fd.get('priority'),
       assigneeIds,
       dueDate: fd.get('dueDate') || undefined,
+      sprint: sprintVal ? Number(sprintVal) : undefined,
       link: fd.get('link') || ''
     })
   }
@@ -266,6 +268,7 @@ export default function UserDashboard() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const assigneeIds = fd.getAll('assigneeIds').filter(id => id.toString().trim() !== '')
+    const sprintVal = fd.get('sprint')
     editMutation.mutate({
       id: editingTask._id,
       taskData: {
@@ -274,6 +277,7 @@ export default function UserDashboard() {
         priority: fd.get('priority'),
         assigneeIds,
         dueDate: fd.get('dueDate') || undefined,
+        sprint: sprintVal ? Number(sprintVal) : null,
         link: fd.get('link') || '',
         updatedAt: editingTask.updatedAt
       }
@@ -328,7 +332,14 @@ export default function UserDashboard() {
                       className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200" 
                       onClick={() => setSelectedTask(task)}
                     >
-                      <h4 className="font-semibold text-[var(--text1)] text-base">{task.title}</h4>
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-semibold text-[var(--text1)] text-base break-words flex-1">{task.title}</h4>
+                        {task.sprint !== undefined && task.sprint !== null && task.sprint !== '' && (
+                          <span className="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30">
+                            Sprint: {task.sprint}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex flex-wrap justify-between items-center gap-2 text-xs mt-3 text-[var(--text2)]">
                         <span className={`px-2 py-1 rounded font-medium capitalize ${getPriorityColor(task.priority)}`}>
                           {task.priority}
@@ -428,14 +439,18 @@ export default function UserDashboard() {
                   <option value="urgent">Urgent</option>
                 </select>
               </label>
-              <div className="flex gap-4">
-                <label className="flex-1 flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
                   Deadline 
-                  <input type="date" name="dueDate" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
+                  <input type="date" name="dueDate" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
                 </label>
-                <label className="flex-1 flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
+                <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
                   Date Assigned 
-                  <input type="date" name="dateAssigned" defaultValue={new Date().toISOString().split('T')[0]} readOnly title="Automatically recorded by the database" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text2)] opacity-70 outline-none" />
+                  <input type="date" name="dateAssigned" defaultValue={new Date().toISOString().split('T')[0]} readOnly title="Automatically recorded by the database" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-[var(--text2)] opacity-70 outline-none" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
+                  Sprint (Optional)
+                  <input type="number" min="1" step="1" name="sprint" placeholder="e.g. 2" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
                 </label>
               </div>
               <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
@@ -500,10 +515,16 @@ export default function UserDashboard() {
                   <option value="urgent">Urgent</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
-                Deadline 
-                <input type="date" name="dueDate" defaultValue={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''} className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
-              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
+                  Deadline 
+                  <input type="date" name="dueDate" defaultValue={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''} className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
+                  Sprint (Optional)
+                  <input type="number" min="1" step="1" name="sprint" defaultValue={editingTask.sprint || ''} placeholder="e.g. 2" className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
+                </label>
+              </div>
               <label className="flex flex-col gap-1 text-sm font-medium text-[var(--text1)]">
                 Link (URL)
                 <input name="link" type="url" defaultValue={editingTask.link || ''} placeholder="https://..." className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2 text-[var(--text1)] outline-none focus:border-[var(--accent)] transition-all duration-200" />
@@ -547,7 +568,10 @@ export default function UserDashboard() {
                   <a href={selectedTask.link} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline break-all print-link">{selectedTask.link}</a>
                 </div>
               )}
-              <div className="flex gap-6 mt-2">
+              <div className="flex flex-wrap gap-6 mt-2">
+                {selectedTask.sprint !== undefined && selectedTask.sprint !== null && selectedTask.sprint !== '' && (
+                  <p><strong className="text-[var(--text2)] mr-2">Sprint:</strong> {selectedTask.sprint}</p>
+                )}
                 <p><strong className="text-[var(--text2)] mr-2">Deadline:</strong> {selectedTask.dueDate ? new Date(selectedTask.dueDate).toLocaleDateString() : 'None'}</p>
                 <p><strong className="text-[var(--text2)] mr-2">Date Assigned:</strong> {selectedTask.createdAt ? new Date(selectedTask.createdAt).toLocaleDateString() : 'Unknown'}</p>
               </div>

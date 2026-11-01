@@ -51,3 +51,15 @@ test('rejects an expired gate token', () => {
   assert.equal(response.statusCode, 403)
   assert.equal(nextCalled, false)
 })
+
+test('allows authenticated request with Bearer authorization header', () => {
+  const response = makeResponse()
+  let nextCalled = false
+
+  verifyGateTokenHeader({ headers: { authorization: 'Bearer mock-firebase-token' } }, response, () => {
+    nextCalled = true
+  })
+
+  assert.equal(nextCalled, true)
+})
+
